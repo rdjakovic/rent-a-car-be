@@ -45,6 +45,8 @@ public class SecurityConfig {
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                // Also permit custom OpenAPI path configured in application.yml
+                .requestMatchers("/api-docs", "/api-docs/**").permitAll()
                 
                 // Admin only endpoints
                 .requestMatchers(HttpMethod.POST, "/api/v1/branches/**").hasRole("ADMIN")

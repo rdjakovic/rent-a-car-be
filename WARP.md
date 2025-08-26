@@ -115,11 +115,12 @@ com.nextstep.rentacar/
 - Uses **Flyway** for migrations (located in `src/main/resources/db/migration/`)
 - **Long** type used for all entity IDs
 - Audit fields (`created_at`, `updated_at`) handled by `BaseEntity` with JPA auditing
+- JPA auditing configured with UTC timezone via `dateTimeProvider` bean in `JpaConfig`
 
 ### Testing
 - Integration tests use `@SpringBootTest` with `@ActiveProfiles("test")`
 - **Testcontainers** used for PostgreSQL in test environment
-- Custom `AuditingTestConfig` for consistent test timestamps
+- UTC timestamps for consistent auditing across all environments
 
 ### Security
 - JWT tokens with configurable expiration

@@ -10,10 +10,16 @@ This is a **Rent-a-Car API** built with Spring Boot 3.5.5 and Java 21, providing
 
 ### Development
 ```bash
-# Run the application (local profile with H2 database)
+# Run the application (default local profile with H2 database)
 ./mvnw spring-boot:run
 
-# Run with specific profile
+# Run with local profile explicitly (Windows PowerShell)
+./mvnw spring-boot:run -Dspring-boot.run.arguments="--spring.profiles.active=local"
+
+# Run with local profile explicitly (Unix/macOS)
+./mvnw spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local
+
+# Run with specific profile (e.g., dev)
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Build the application

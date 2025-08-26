@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,17 +54,19 @@ public class CustomerController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<CustomerResponseDto>> list(Pageable pageable) {
+    @Operation(summary = "List customers with pagination and sorting")
+    public ResponseEntity<Page<CustomerResponseDto>> list(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(customerService.list(pageable));
     }
 
     @GetMapping("/search")
+    @Operation(summary = "Search customers with optional filters, pagination and sorting")
     public ResponseEntity<Page<CustomerResponseDto>> search(
             @RequestParam(required = false) String email,
             @RequestParam(required = false) String firstName,
             @RequestParam(required = false) String lastName,
             @RequestParam(required = false) String city,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(customerService.search(email, firstName, lastName, city, pageable));
     }
 }

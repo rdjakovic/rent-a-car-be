@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -75,6 +76,7 @@ public class ReservationController {
     }
 
     @GetMapping
+    @Operation(summary = "List reservations with optional filters, pagination and sorting")
     public ResponseEntity<Page<ReservationResponseDto>> listWithFilters(
             @RequestParam(required = false) Long customerId,
             @RequestParam(required = false) Long carId,
@@ -82,7 +84,7 @@ public class ReservationController {
             @RequestParam(required = false) Long branchId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(reservationService.listWithFilters(customerId, carId, status, branchId, startDate, endDate, pageable));
     }
 }

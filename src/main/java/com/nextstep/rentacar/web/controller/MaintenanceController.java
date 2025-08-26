@@ -12,6 +12,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -59,6 +60,7 @@ public class MaintenanceController {
     }
 
     @GetMapping
+    @Operation(summary = "List maintenance records with optional filters, pagination and sorting")
     public ResponseEntity<Page<Maintenance>> listWithFilters(
             @RequestParam(required = false) Long carId,
             @RequestParam(required = false) Long employeeId,
@@ -67,7 +69,7 @@ public class MaintenanceController {
             @RequestParam(required = false) Long branchId,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(maintenanceService.listByFilters(carId, employeeId, status, maintenanceType, branchId, startDate, endDate, pageable));
     }
 

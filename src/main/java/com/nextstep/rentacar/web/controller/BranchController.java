@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import org.springdoc.core.annotations.ParameterObject;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -56,12 +57,14 @@ public class BranchController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<BranchResponseDto>> list(Pageable pageable) {
+    @Operation(summary = "List branches with pagination and sorting")
+    public ResponseEntity<Page<BranchResponseDto>> list(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(branchService.list(pageable));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<BranchResponseDto>> searchByName(@RequestParam String name, Pageable pageable) {
+    @Operation(summary = "Search branches by name with pagination and sorting")
+    public ResponseEntity<Page<BranchResponseDto>> searchByName(@RequestParam String name, @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(branchService.searchByName(name, pageable));
     }
 

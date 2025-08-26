@@ -1,0 +1,27 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+  flyway:
+    locations: classpath:db/migration
+    clean-on-validation-error: true
+
+logging:
+  level:
+    com.nextstep.rentacar: INFO
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN
+    org.testcontainers: INFO
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"
+
+jwt:
+  secret: test-secret-key-256-bits-long-for-hmac-sha256-algorithm-testing-only
+  expiration: 60000 # 1 minute for fast test execution
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

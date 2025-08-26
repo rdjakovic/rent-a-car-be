@@ -7,6 +7,8 @@ import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
 import com.nextstep.rentacar.service.CarService;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -73,6 +75,11 @@ public class CarController {
     }
 
     @GetMapping
+    @Operation(summary = "List cars with pagination and sorting")
+    @Parameter(name = "page", description = "Page number (0-based)", example = "0")
+    @Parameter(name = "size", description = "Page size", example = "10")
+    @Parameter(name = "sort", description = "Sort criteria in format: property,direction",
+            example = "make,asc", array = @ArraySchema(schema = @Schema(type = "string")))
     public ResponseEntity<Page<CarListResponseDto>> list(Pageable pageable) {
         return ResponseEntity.ok(carService.list(pageable));
     }

@@ -7,9 +7,8 @@ import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
 import com.nextstep.rentacar.service.CarService;
-import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -76,21 +75,19 @@ public class CarController {
 
     @GetMapping
     @Operation(summary = "List cars with pagination and sorting")
-    @Parameter(name = "page", description = "Page number (0-based)", example = "0")
-    @Parameter(name = "size", description = "Page size", example = "10")
-    @Parameter(name = "sort", description = "Sort criteria in format: property,direction",
-            example = "make,asc", array = @ArraySchema(schema = @Schema(type = "string")))
-    public ResponseEntity<Page<CarListResponseDto>> list(Pageable pageable) {
+    public ResponseEntity<Page<CarListResponseDto>> list(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(carService.list(pageable));
     }
 
     @GetMapping("/deleted")
-    public ResponseEntity<Page<CarListResponseDto>> listDeleted(Pageable pageable) {
+    @Operation(summary = "List deleted cars with pagination and sorting")
+    public ResponseEntity<Page<CarListResponseDto>> listDeleted(@ParameterObject Pageable pageable) {
         return ResponseEntity.ok(carService.listDeleted(pageable));
     }
 
     @GetMapping("/branch/{branchId}")
-    public ResponseEntity<Page<CarListResponseDto>> listByBranch(@PathVariable Long branchId, Pageable pageable) {
+    @Operation(summary = "List cars by branch with pagination and sorting")
+    public ResponseEntity<Page<CarListResponseDto>> listByBranch(@PathVariable Long branchId, @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(carService.listByBranch(branchId, pageable));
     }
 
@@ -109,7 +106,7 @@ public class CarController {
             @RequestParam(required = false) FuelType fuelType,
             @RequestParam(required = false) Integer minSeats,
             @RequestParam(required = false) BigDecimal maxPrice,
-            Pageable pageable) {
+            @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(
                 carService.findAvailable(branchId, startDate, endDate, category, transmission, fuelType, minSeats, maxPrice, pageable)
         );

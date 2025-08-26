@@ -18,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -38,6 +39,8 @@ class CarServiceIntegrationTest {
     private CustomerService customerService;
     @Autowired
     private ReservationService reservationService;
+    @Autowired
+    private EntityManager entityManager;
 
     private Long branchId;
 
@@ -153,5 +156,20 @@ class CarServiceIntegrationTest {
         assertThatThrownBy(() -> carService.create(sampleCarRequest("1HGCM82633A004352")))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessageContaining("VIN");
+    }
+
+    @Test
+    @DisplayName("Restore car works even when entity manager is cleared (bypassing @Where)")
+    void restoreWorksAfterEntityManagerClear() {
+        CarResponseDto created = carService.create(sampleCarRequest("JH4KA9650MC000001"));
+        // Soft delete
+        carService.delete(created.getId());
+        // Simulate separate transaction/session
+        entityManager.flush();
+        entityManager.clear();
+        // Restore should find it via native query bypassing @Where
+        carService.restore(created.getId());
+        CarResponseDto afterRestore = carService.getById(created.getId());
+        assertThat(afterRestore.getStatus()).isEqualTo(CarStatus.AVAILABLE);
     }
 }

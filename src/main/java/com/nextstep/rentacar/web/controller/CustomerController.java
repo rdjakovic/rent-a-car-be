@@ -9,6 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 @RestController
 @RequestMapping("/api/customers")
@@ -22,6 +27,11 @@ public class CustomerController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a customer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Created", content = @Content(schema = @Schema(implementation = CustomerResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<CustomerResponseDto> create(@Valid @RequestBody CustomerRequestDto request) {
         return ResponseEntity.ok(customerService.create(request));
     }

@@ -13,6 +13,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -30,6 +35,12 @@ public class CarController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a car")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Created", content = @Content(schema = @Schema(implementation = CarResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class))),
+            @ApiResponse(responseCode = "409", description = "Conflict", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<CarResponseDto> create(@Valid @RequestBody CarRequestDto request) {
         return ResponseEntity.ok(carService.create(request));
     }
@@ -52,6 +63,11 @@ public class CarController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Get a car by ID")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Found", content = @Content(schema = @Schema(implementation = CarResponseDto.class))),
+            @ApiResponse(responseCode = "404", description = "Not Found", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<CarResponseDto> getById(@PathVariable Long id) {
         return ResponseEntity.ok(carService.getById(id));
     }
@@ -72,6 +88,11 @@ public class CarController {
     }
 
     @GetMapping("/available")
+    @Operation(summary = "Find available cars by date range with optional filters")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "OK"),
+            @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<Page<CarListResponseDto>> findAvailable(
             @RequestParam Long branchId,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,

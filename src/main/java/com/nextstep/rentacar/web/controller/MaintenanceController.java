@@ -12,6 +12,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -28,6 +33,11 @@ public class MaintenanceController {
     }
 
     @PostMapping("/schedule")
+    @Operation(summary = "Schedule a maintenance")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Scheduled", content = @Content(schema = @Schema(implementation = com.nextstep.rentacar.domain.entity.Maintenance.class))),
+            @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<Maintenance> schedule(@Valid @RequestBody MaintenanceScheduleRequestDto request) {
         Maintenance m = maintenanceService.schedule(request.getCarId(), request.getType(), request.getDescription(), request.getScheduledDate());
         return ResponseEntity.ok(m);

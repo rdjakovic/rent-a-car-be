@@ -9,6 +9,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.util.List;
 
@@ -24,6 +29,12 @@ public class BranchController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a branch")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Created", content = @Content(schema = @Schema(implementation = BranchResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class))),
+            @ApiResponse(responseCode = "409", description = "Conflict", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<BranchResponseDto> create(@Valid @RequestBody BranchRequestDto request) {
         return ResponseEntity.ok(branchService.create(request));
     }

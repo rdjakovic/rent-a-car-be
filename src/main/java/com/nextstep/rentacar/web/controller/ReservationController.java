@@ -11,6 +11,11 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 
 import java.time.LocalDate;
 
@@ -26,6 +31,12 @@ public class ReservationController {
     }
 
     @PostMapping
+    @Operation(summary = "Create a reservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Created", content = @Content(schema = @Schema(implementation = ReservationResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class))),
+            @ApiResponse(responseCode = "409", description = "Conflict", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<ReservationResponseDto> create(@Valid @RequestBody ReservationRequestDto request) {
         return ResponseEntity.ok(reservationService.create(request));
     }
@@ -53,6 +64,11 @@ public class ReservationController {
     }
 
     @PostMapping("/{id}/complete")
+    @Operation(summary = "Complete a reservation")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Completed", content = @Content(schema = @Schema(implementation = ReservationResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "Conflict", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
     public ResponseEntity<ReservationResponseDto> complete(@PathVariable Long id) {
         reservationService.complete(id);
         return ResponseEntity.ok(reservationService.getById(id));

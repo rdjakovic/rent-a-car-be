@@ -4,6 +4,8 @@ import com.nextstep.rentacar.service.auth.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -34,6 +36,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
+    @Profile("!local")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -77,6 +80,17 @@ public class SecurityConfig {
         // H2 Console configuration (for dev environment)
         http.headers(headers -> headers.frameOptions().sameOrigin());
 
+        return http.build();
+    }
+
+    @Bean
+    @Profile("local")
+    @Order(0)
+    public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
+        http.cors(c -> c.configurationSource(corsConfigurationSource()))
+            .csrf(AbstractHttpConfigurer::disable)
+            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+            .authorizeHttpRequests(a -> a.anyRequest().permitAll());
         return http.build();
     }
 

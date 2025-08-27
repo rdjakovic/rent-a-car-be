@@ -73,4 +73,54 @@ class CustomerServiceIntegrationTest {
         assertThatThrownBy(() -> customerService.getById(c1.getId()))
                 .isInstanceOf(jakarta.persistence.EntityNotFoundException.class);
     }
+
+    @Test
+    @DisplayName("searchAny returns customers matching email, firstName, lastName, or city (case-insensitive)")
+    void searchAny_matchesAnyField_caseInsensitive() {
+        customerService.create(validCustomer("bob@example.com", "L44444"));
+        CustomerRequestDto dto2 = validCustomer("eve@example.com", "L55555");
+        dto2.setFirstName("Eve");
+        dto2.setLastName("Smith");
+        dto2.setCity("Metropolis");
+        customerService.create(dto2);
+
+        // Match by email
+        Page<CustomerResponseDto> byEmail = customerService.searchAny("bob@EXAMPLE.com", PageRequest.of(0, 10));
+        assertThat(byEmail.getContent()).hasSize(1);
+        assertThat(byEmail.getContent().get(0).getEmail()).isEqualTo("bob@example.com");
+
+        // Match by firstName
+        Page<CustomerResponseDto> byFirstName = customerService.searchAny("eve", PageRequest.of(0, 10));
+        assertThat(byFirstName.getContent()).hasSize(1);
+        assertThat(byFirstName.getContent().get(0).getFirstName()).isEqualTo("Eve");
+
+        // Match by lastName
+        Page<CustomerResponseDto> byLastName = customerService.searchAny("smith", PageRequest.of(0, 10));
+        assertThat(byLastName.getContent()).hasSize(1);
+        assertThat(byLastName.getContent().get(0).getLastName()).isEqualTo("Smith");
+
+        // Match by city
+        Page<CustomerResponseDto> byCity = customerService.searchAny("metropolis", PageRequest.of(0, 10));
+        assertThat(byCity.getContent()).hasSize(1);
+        assertThat(byCity.getContent().get(0).getCity()).isEqualTo("Metropolis");
+
+        // No match
+        Page<CustomerResponseDto> noMatch = customerService.searchAny("notfound", PageRequest.of(0, 10));
+        assertThat(noMatch.getContent()).isEmpty();
+    }
+
+    @Test
+    @DisplayName("searchAny supports pagination")
+    void searchAny_pagination() {
+        for (int i = 0; i < 15; i++) {
+            CustomerRequestDto dto = validCustomer("user" + i + "@test.com", "L9" + i);
+            dto.setFirstName("User" + i);
+            customerService.create(dto);
+        }
+        Page<CustomerResponseDto> page1 = customerService.searchAny("user", PageRequest.of(0, 10));
+        Page<CustomerResponseDto> page2 = customerService.searchAny("user", PageRequest.of(1, 10));
+        assertThat(page1.getContent()).hasSize(10);
+        assertThat(page2.getContent()).hasSize(5);
+        assertThat(page1.getTotalElements()).isEqualTo(15);
+    }
 }

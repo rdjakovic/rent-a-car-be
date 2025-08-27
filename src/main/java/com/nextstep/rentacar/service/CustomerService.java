@@ -22,4 +22,6 @@ public interface CustomerService {
                                      String lastName,
                                      String city,
                                      Pageable pageable);
+
+    Page<CustomerResponseDto> searchAny(String search, Pageable pageable);
 }

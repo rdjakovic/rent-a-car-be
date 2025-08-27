@@ -86,6 +86,13 @@ public class CustomerServiceImpl implements CustomerService {
                 .map(customerMapper::toResponseDto);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CustomerResponseDto> searchAny(String search, Pageable pageable) {
+        return customerRepository.searchAny(search, pageable)
+                .map(customerMapper::toResponseDto);
+    }
+
     private void validateCustomer(CustomerRequestDto request) {
         LocalDate dob = request.getDateOfBirth();
         if (dob == null) {

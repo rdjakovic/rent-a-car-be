@@ -10,6 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springdoc.core.annotations.ParameterObject;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -68,5 +69,21 @@ public class CustomerController {
             @RequestParam(required = false) String city,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(customerService.search(email, firstName, lastName, city, pageable));
+    }
+
+    @GetMapping("/searchany")
+    @Operation(
+        summary = "Search customers by a single value in email, firstName, lastName, or city (OR logic)",
+        description = "Returns a paginated list of customers where the search value matches any of the following fields: email, firstName, lastName, or city. The search is case-insensitive and uses OR logic."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "Successful search", content = @Content(schema = @Schema(implementation = CustomerResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Invalid request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
+    public ResponseEntity<Page<CustomerResponseDto>> searchAny(
+            @Parameter(description = "Search value to match against email, firstName, lastName, or city", required = true, example = "smith")
+            @RequestParam String search,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(customerService.searchAny(search, pageable));
     }
 }

@@ -45,6 +45,13 @@ public interface CustomerRepository extends JpaRepository<Customer, Long> {
                                   @Param("city") String city,
                                   Pageable pageable);
 
+    @Query("SELECT c FROM Customer c WHERE " +
+           "LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(c.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(c.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+           "LOWER(c.city) LIKE LOWER(CONCAT('%', :search, '%'))")
+    Page<Customer> searchAny(@Param("search") String search, Pageable pageable);
+
     boolean existsByEmail(String email);
 
     boolean existsByDriverLicenseNo(String driverLicenseNo);

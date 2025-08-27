@@ -36,7 +36,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
     @Bean
-    @Profile("!local")
+    @Profile("!local & !test")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -84,7 +84,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    @Profile("local")
+    @Profile({"local", "test"})
     @Order(0)
     public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))
@@ -93,6 +93,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(a -> a.anyRequest().permitAll());
         return http.build();
     }
+
 
     @Bean
     public PasswordEncoder passwordEncoder() {

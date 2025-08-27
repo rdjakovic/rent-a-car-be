@@ -35,12 +35,28 @@ INSERT INTO cars (vin, make, model, car_year, category, transmission, fuel_type,
 ('2T3RFREV9FW123456', 'Honda', 'Civic', 2024, 'COMPACT', 'AUTOMATIC', 'GASOLINE', 5, 8000, 'AVAILABLE', 35.00, 1, 'White', 'DEF-5678'),
 ('3VWD17AJ8EM234567', 'Chevrolet', 'Suburban', 2023, 'SUV', 'AUTOMATIC', 'GASOLINE', 8, 22000, 'AVAILABLE', 85.00, 2, 'Black', 'GHI-9012'),
 ('WBAPL5G59F3A45678', 'BMW', 'X5', 2024, 'LUXURY', 'AUTOMATIC', 'GASOLINE', 5, 5000, 'AVAILABLE', 120.00, 3, 'Blue', 'JKL-3456'),
-('1FTEW1EP6HF567890', 'Ford', 'Transit', 2023, 'VAN', 'MANUAL', 'DIESEL', 8, 18000, 'AVAILABLE', 65.00, 1, 'White', 'MNO-7890');
+('1FTEW1EP6HF567890', 'Ford', 'Transit', 2023, 'VAN', 'MANUAL', 'DIESEL', 8, 18000, 'AVAILABLE', 65.00, 1, 'White', 'MNO-7890'),
+('5YJ3E1EA7KF317001', 'Tesla', 'Model 3', 2022, 'COMPACT', 'AUTOMATIC', 'ELECTRIC', 5, 12000, 'AVAILABLE', 55.00, 2, 'Red', 'TES-3001'),
+('WBA3A5C56DF600002', 'BMW', 'Z4', 2023, 'PREMIUM', 'AUTOMATIC', 'GASOLINE', 2, 4000, 'AVAILABLE', 110.00, 3, 'Yellow', 'BMW-Z4002'),
+('SALWR2RV1KA799003', 'Land Rover', 'Range Rover', 2024, 'SUV', 'AUTOMATIC', 'DIESEL', 7, 6000, 'AVAILABLE', 130.00, 2, 'Green', 'LRR-9003'),
+('JTDKN3DU0A1234004', 'Toyota', 'Prius', 2022, 'ECONOMY', 'AUTOMATIC', 'HYBRID', 5, 9000, 'AVAILABLE', 38.00, 1, 'Blue', 'PRI-4004'),
+('1C4RJFBG8FC123005', 'Jeep', 'Grand Cherokee', 2023, 'SUV', 'AUTOMATIC', 'GASOLINE', 5, 14000, 'AVAILABLE', 75.00, 3, 'Gray', 'JGC-5005'),
+('WAUZZZ8V6JA123006', 'Audi', 'A3', 2024, 'COMPACT', 'MANUAL', 'GASOLINE', 4, 3000, 'AVAILABLE', 42.00, 2, 'Black', 'AUD-3006'),
+('3CZRE4H59BG123007', 'Honda', 'CR-V', 2023, 'SUV', 'AUTOMATIC', 'HYBRID', 5, 11000, 'AVAILABLE', 68.00, 1, 'Silver', 'HCR-7007'),
+('WDDZF4JB1JA123008', 'Mercedes-Benz', 'E-Class', 2024, 'LUXURY', 'AUTOMATIC', 'GASOLINE', 5, 2000, 'AVAILABLE', 140.00, 3, 'White', 'MBE-8008');
 
 -- Insert sample customer
 INSERT INTO customers (first_name, last_name, email, phone, driver_license_no, date_of_birth, address, city, country, license_expiry_date) VALUES 
 ('Alice', 'Johnson', 'alice.johnson@email.com', '+1-555-0301', 'DL123456789', '1985-03-15', '789 Oak Street', 'New York', 'USA', '2028-03-15'),
-('Bob', 'Smith', 'bob.smith@email.com', '+1-555-0302', 'DL987654321', '1990-07-22', '321 Pine Avenue', 'Los Angeles', 'USA', '2027-07-22');
+('Bob', 'Smith', 'bob.smith@email.com', '+1-555-0302', 'DL987654321', '1990-07-22', '321 Pine Avenue', 'Los Angeles', 'USA', '2027-07-22'),
+('Carlos', 'Martinez', 'carlos.martinez@email.com', '+1-555-0303', 'DL111223344', '1982-11-05', '12 Maple Drive', 'Chicago', 'USA', '2026-11-05'),
+('Diana', 'Lee', 'diana.lee@email.com', '+1-555-0304', 'DL555666777', '1995-02-18', '88 Elm Street', 'San Francisco', 'USA', '2029-02-18'),
+('Ethan', 'Wong', 'ethan.wong@email.com', '+1-555-0305', 'DL888999000', '1988-08-30', '23 Cedar Lane', 'Seattle', 'USA', '2028-08-30'),
+('Fatima', 'Khan', 'fatima.khan@email.com', '+1-555-0306', 'DL222333444', '1993-12-12', '45 Spruce Road', 'Houston', 'USA', '2027-12-12'),
+('George', 'Brown', 'george.brown@email.com', '+1-555-0307', 'DL777888999', '1979-06-25', '67 Willow Ave', 'Miami', 'USA', '2026-06-25'),
+('Hannah', 'Kim', 'hannah.kim@email.com', '+1-555-0308', 'DL333444555', '1997-09-14', '90 Birch Blvd', 'Boston', 'USA', '2030-09-14'),
+('Ivan', 'Petrov', 'ivan.petrov@email.com', '+1-555-0309', 'DL444555666', '1984-04-09', '101 Aspen Ct', 'Denver', 'USA', '2029-04-09'),
+('Julia', 'Rossi', 'julia.rossi@email.com', '+1-555-0310', 'DL555666778', '1992-10-21', '202 Poplar St', 'Las Vegas', 'USA', '2027-10-21');
 
 -- Insert sample reservation
 INSERT INTO reservations (customer_id, car_id, start_date, end_date, pickup_branch_id, dropoff_branch_id, status, total_price, currency, notes) VALUES 

@@ -3,6 +3,7 @@ package com.nextstep.rentacar.web.controller;
 import com.nextstep.rentacar.domain.enums.CarCategory;
 import com.nextstep.rentacar.domain.enums.FuelType;
 import com.nextstep.rentacar.domain.enums.TransmissionType;
+import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
@@ -85,7 +86,7 @@ public class CarController {
         @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<Page<CarListResponseDto>> list(
-            @ParameterObject com.nextstep.rentacar.dto.request.CarFilterDto filter,
+            @ParameterObject CarFilterDto filter,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(carService.list(filter, pageable));
     }

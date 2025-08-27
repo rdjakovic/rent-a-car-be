@@ -87,7 +87,7 @@ class CustomerServiceIntegrationTest {
         // Match by email
         Page<CustomerResponseDto> byEmail = customerService.searchAny("bob@EXAMPLE.com", PageRequest.of(0, 10));
         assertThat(byEmail.getContent()).hasSize(1);
-        assertThat(byEmail.getContent().get(0).getEmail()).isEqualTo("bob@example.com");
+        assertThat(byEmail.getContent().getFirst().getEmail()).isEqualTo("bob@example.com");
 
         // Match by firstName
         Page<CustomerResponseDto> byFirstName = customerService.searchAny("eve", PageRequest.of(0, 10));

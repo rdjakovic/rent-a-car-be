@@ -11,7 +11,7 @@ import java.util.UUID;
  */
 public class CarTestDataBuilder {
     
-    private String vin = "12345678901234567";
+    private String vin = generateUniqueVin();
     private String make = "Toyota";
     private String model = "Corolla";
     private Integer year = 2022;
@@ -27,6 +27,13 @@ public class CarTestDataBuilder {
     private String insurancePolicy = "POL-" + System.currentTimeMillis() % 100000;
     
     private CarTestDataBuilder() {
+    }
+    
+    private static String generateUniqueVin() {
+        // Generate a unique 17-character VIN using timestamp and random elements
+        long timestamp = System.currentTimeMillis();
+        String base = "1HGBH41JXMN" + String.format("%06d", timestamp % 1000000);
+        return base;
     }
     
     public static CarTestDataBuilder aCar() {

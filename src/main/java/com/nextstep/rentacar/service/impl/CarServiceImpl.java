@@ -12,6 +12,7 @@ import com.nextstep.rentacar.mapper.CarMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.service.CarService;
+import com.nextstep.rentacar.exception.DuplicateResourceException;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -34,7 +35,7 @@ public class CarServiceImpl implements CarService {
     @Override
     public CarResponseDto create(CarRequestDto request) {
         if (carRepository.existsByVin(request.getVin())) {
-            throw new IllegalArgumentException("Car with VIN already exists: " + request.getVin());
+            throw new DuplicateResourceException("Car with VIN already exists: " + request.getVin());
         }
         Car car = carMapper.toEntity(request);
         Branch branch = branchRepository.findById(request.getBranchId())
@@ -49,7 +50,7 @@ public class CarServiceImpl implements CarService {
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Car not found: " + id));
         if (!car.getVin().equals(request.getVin()) && carRepository.existsByVin(request.getVin())) {
-            throw new IllegalArgumentException("Another car with VIN already exists: " + request.getVin());
+            throw new DuplicateResourceException("Another car with VIN already exists: " + request.getVin());
         }
         carMapper.updateEntityFromDto(request, car);
         if (request.getBranchId() != null) {

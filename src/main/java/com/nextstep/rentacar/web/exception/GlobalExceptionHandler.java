@@ -1,5 +1,6 @@
 package com.nextstep.rentacar.web.exception;
 
+import com.nextstep.rentacar.exception.DuplicateResourceException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -38,6 +39,14 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ProblemDetail> handleConflict(IllegalStateException ex, HttpServletRequest request) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setTitle("Conflict");
+        pd.setProperty("path", request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(pd);
+    }
+
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ProblemDetail> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
         pd.setTitle("Conflict");
         pd.setProperty("path", request.getRequestURI());

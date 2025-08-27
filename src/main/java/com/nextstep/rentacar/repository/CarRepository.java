@@ -93,6 +93,6 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
     @Query(value = "SELECT * FROM cars WHERE id = :id", nativeQuery = true)
     Optional<Car> findByIdIncludingDeleted(@Param("id") Long id);
 
-    @Query("SELECT c FROM Car c WHERE c.deleted = true")
+    @Query(value = "SELECT * FROM cars WHERE deleted = true", nativeQuery = true)
     Page<Car> findDeletedCars(Pageable pageable);
 }

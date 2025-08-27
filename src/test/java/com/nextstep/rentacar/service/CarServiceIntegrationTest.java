@@ -23,6 +23,7 @@ import jakarta.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import com.nextstep.rentacar.exception.DuplicateResourceException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -154,7 +155,7 @@ class CarServiceIntegrationTest {
 
         // VIN uniqueness
         assertThatThrownBy(() -> carService.create(sampleCarRequest("1HGCM82633A004352")))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("VIN");
     }
 

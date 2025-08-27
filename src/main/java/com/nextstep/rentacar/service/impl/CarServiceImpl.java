@@ -5,6 +5,7 @@ import com.nextstep.rentacar.domain.entity.Car;
 import com.nextstep.rentacar.domain.enums.CarCategory;
 import com.nextstep.rentacar.domain.enums.FuelType;
 import com.nextstep.rentacar.domain.enums.TransmissionType;
+import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
@@ -19,9 +20,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.persistence.criteria.Predicate;
+import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.CriteriaQuery;
+import jakarta.persistence.criteria.CriteriaBuilder;
 
 @Service
 @RequiredArgsConstructor
@@ -121,5 +130,36 @@ public class CarServiceImpl implements CarService {
         return carRepository.findAvailableCarsWithFilters(branchId, startDate, endDate,
                 category, transmission, fuelType, minSeats, maxPrice, pageable)
                 .map(carMapper::toListResponseDto);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<CarListResponseDto> list(CarFilterDto filter, Pageable pageable) {
+        Specification<Car> spec = buildCarSpecification(filter);
+        return carRepository.findAll(spec, pageable)
+                .map(carMapper::toListResponseDto);
+    }
+
+    private Specification<Car> buildCarSpecification(CarFilterDto filter) {
+        return (Root<Car> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (filter.getCategory() != null) {
+                predicates.add(cb.equal(root.get("category"), filter.getCategory()));
+            }
+            if (filter.getTransmission() != null) {
+                predicates.add(cb.equal(root.get("transmission"), filter.getTransmission()));
+            }
+            if (filter.getFuelType() != null) {
+                predicates.add(cb.equal(root.get("fuelType"), filter.getFuelType()));
+            }
+            if (filter.getMinSeats() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("seats"), filter.getMinSeats()));
+            }
+            if (filter.getMaxPrice() != null) {
+                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filter.getMaxPrice()));
+            }
+            // Note: availableFrom/availableTo filtering would require reservation logic, not just car fields.
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
     }
 }

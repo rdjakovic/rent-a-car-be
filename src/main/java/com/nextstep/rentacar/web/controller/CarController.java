@@ -74,9 +74,20 @@ public class CarController {
     }
 
     @GetMapping
-    @Operation(summary = "List cars with pagination and sorting")
-    public ResponseEntity<Page<CarListResponseDto>> list(@ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(carService.list(pageable));
+    @Operation(
+        summary = "List cars with pagination, sorting, and filtering",
+        description = "Returns a paginated, sorted, and filtered list of cars. " +
+                      "Filter by any combination of fields (category, transmission, fuelType, minSeats, maxPrice, availableFrom, availableTo). " +
+                      "Sorting and pagination are supported via standard Spring Data parameters."
+    )
+    @ApiResponses({
+        @ApiResponse(responseCode = "200", description = "OK", content = @Content(schema = @Schema(implementation = CarListResponseDto.class))),
+        @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
+    public ResponseEntity<Page<CarListResponseDto>> list(
+            @ParameterObject com.nextstep.rentacar.dto.request.CarFilterDto filter,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(carService.list(filter, pageable));
     }
 
     @GetMapping("/deleted")

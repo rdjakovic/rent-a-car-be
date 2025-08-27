@@ -3,6 +3,7 @@ package com.nextstep.rentacar.service;
 import com.nextstep.rentacar.domain.enums.CarCategory;
 import com.nextstep.rentacar.domain.enums.FuelType;
 import com.nextstep.rentacar.domain.enums.TransmissionType;
+import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
@@ -39,4 +40,6 @@ public interface CarService {
                                            Integer minSeats,
                                            BigDecimal maxPrice,
                                            Pageable pageable);
+
+    Page<CarListResponseDto> list(CarFilterDto filter, Pageable pageable);
 }

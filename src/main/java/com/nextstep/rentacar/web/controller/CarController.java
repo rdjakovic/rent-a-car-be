@@ -78,7 +78,7 @@ public class CarController {
     @Operation(
         summary = "List cars with pagination, sorting, and filtering",
         description = "Returns a paginated, sorted, and filtered list of cars. " +
-                      "Filter by any combination of fields (category, transmission, fuelType, minSeats, maxPrice, availableFrom, availableTo). " +
+                      "Filter by any combination of fields (vin, make, model, year, category, transmission, fuelType, minSeats, maxPrice). " +
                       "Sorting and pagination are supported via standard Spring Data parameters."
     )
     @ApiResponses({
@@ -86,7 +86,10 @@ public class CarController {
         @ApiResponse(responseCode = "400", description = "Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<Page<CarListResponseDto>> list(
-            @ParameterObject CarFilterDto filter,
+            @ParameterObject @io.swagger.v3.oas.annotations.parameters.RequestBody(
+                description = "Car filter parameters. All fields are optional.",
+                content = @Content(schema = @Schema(implementation = CarFilterDto.class))
+            ) CarFilterDto filter,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(carService.list(filter, pageable));
     }

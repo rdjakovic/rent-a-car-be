@@ -7,6 +7,7 @@ import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.ReservationStatus;
 import com.nextstep.rentacar.dto.request.ReservationRequestDto;
 import com.nextstep.rentacar.dto.response.ReservationResponseDto;
+import com.nextstep.rentacar.exception.SearchValidationException;
 import com.nextstep.rentacar.mapper.ReservationMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
@@ -172,9 +173,34 @@ public class ReservationServiceImpl implements ReservationService {
                                                         LocalDate startDate,
                                                         LocalDate endDate,
                                                         Pageable pageable) {
+        return listWithFilters(customerId, carId, status, branchId, startDate, endDate, null, pageable);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ReservationResponseDto> listWithFilters(Long customerId,
+                                                        Long carId,
+                                                        ReservationStatus status,
+                                                        Long branchId,
+                                                        LocalDate startDate,
+                                                        LocalDate endDate,
+                                                        String search,
+                                                        Pageable pageable) {
+        // Validate date range
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Invalid date range: endDate must be on/after startDate");
         }
+
+        // Validate and sanitize search parameter
+        String sanitizedSearch = validateAndSanitizeSearch(search);
+
+        // If search is provided, use search-optimized query
+        if (sanitizedSearch != null && !sanitizedSearch.trim().isEmpty()) {
+            return reservationRepository.findBySearchTerm(sanitizedSearch, pageable)
+                    .map(reservationMapper::toResponseDto);
+        }
+
+        // Otherwise, use existing filter logic
         if (startDate == null) startDate = LocalDate.now().minusYears(50); // broad default
         if (endDate == null) endDate = LocalDate.now().plusYears(50);
         return reservationRepository.findReservationsInDateRange(customerId, carId, status, branchId, startDate, endDate, pageable)
@@ -196,5 +222,39 @@ public class ReservationServiceImpl implements ReservationService {
         if (conflict) {
             throw new IllegalStateException("Car is not available for the selected dates");
         }
+    }
+
+    /**
+     * Validates and sanitizes search parameter.
+     * @param search the raw search term
+     * @return sanitized search term or null if invalid
+     * @throws SearchValidationException if search term validation fails
+     */
+    private String validateAndSanitizeSearch(String search) {
+        if (search == null || search.trim().isEmpty()) {
+            return null;
+        }
+
+        String trimmed = search.trim();
+        
+        // Minimum length validation (requirement 2.4)
+        if (trimmed.length() < 2) {
+            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
+        }
+
+        // Maximum length validation to prevent abuse
+        if (trimmed.length() > 100) {
+            throw new SearchValidationException(trimmed, "Search term cannot exceed 100 characters");
+        }
+
+        // Sanitize input - remove potentially dangerous characters
+        // Allow alphanumeric, spaces, hyphens, dots, @, and common punctuation
+        String sanitized = trimmed.replaceAll("[^a-zA-Z0-9\\s\\-\\.@_+()]", "");
+        
+        if (sanitized.trim().isEmpty()) {
+            throw new SearchValidationException(trimmed, "Search term contains only invalid characters");
+        }
+
+        return sanitized;
     }
 }

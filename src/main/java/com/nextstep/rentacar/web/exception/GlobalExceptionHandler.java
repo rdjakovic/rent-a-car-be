@@ -1,6 +1,7 @@
 package com.nextstep.rentacar.web.exception;
 
 import com.nextstep.rentacar.exception.DuplicateResourceException;
+import com.nextstep.rentacar.exception.SearchValidationException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
@@ -27,6 +28,26 @@ public class GlobalExceptionHandler {
         pd.setTitle("Not Found");
         pd.setProperty("path", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd);
+    }
+
+    @ExceptionHandler(SearchValidationException.class)
+    public ResponseEntity<ProblemDetail> handleSearchValidation(SearchValidationException ex, HttpServletRequest request) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        pd.setTitle("Search Validation Error");
+        pd.setProperty("path", request.getRequestURI());
+        
+        // Add search-specific properties for better debugging
+        if (ex.getSearchTerm() != null) {
+            pd.setProperty("searchTerm", ex.getSearchTerm());
+        }
+        pd.setProperty("validationError", ex.getValidationError());
+        pd.setProperty("searchRequirements", Map.of(
+            "minLength", 2,
+            "maxLength", 100,
+            "allowedCharacters", "alphanumeric, spaces, hyphens, dots, @ symbols, underscores, plus signs, parentheses"
+        ));
+        
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(pd);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

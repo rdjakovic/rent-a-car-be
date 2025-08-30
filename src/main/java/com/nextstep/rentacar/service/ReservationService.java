@@ -33,4 +33,13 @@ public interface ReservationService {
                                                  LocalDate startDate,
                                                  LocalDate endDate,
                                                  Pageable pageable);
+
+    Page<ReservationResponseDto> listWithFilters(Long customerId,
+                                                 Long carId,
+                                                 ReservationStatus status,
+                                                 Long branchId,
+                                                 LocalDate startDate,
+                                                 LocalDate endDate,
+                                                 String search,
+                                                 Pageable pageable);
 }

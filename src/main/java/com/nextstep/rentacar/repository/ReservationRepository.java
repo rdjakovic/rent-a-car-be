@@ -107,4 +107,31 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                      @Param("startDate") LocalDate startDate,
                                      @Param("endDate") LocalDate endDate,
                                      Pageable pageable);
+
+    /**
+     * Find reservations by search term across multiple fields with optimized JOINs.
+     * Searches across customer name, email, phone, reservation ID, car details, and branch names.
+     * Uses case-insensitive matching for text fields and orders by creation date.
+     */
+    @Query("""
+        SELECT DISTINCT r FROM Reservation r 
+        LEFT JOIN r.customer c 
+        LEFT JOIN r.car car
+        LEFT JOIN r.pickupBranch pb
+        LEFT JOIN r.dropoffBranch db
+        WHERE (:search IS NULL OR :search = '') OR
+        (
+            LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            c.phone LIKE CONCAT('%', :search, '%') OR
+            CAST(r.id AS string) LIKE CONCAT('%', :search, '%') OR
+            LOWER(car.make) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(car.model) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(CONCAT(car.year, ' ', car.make, ' ', car.model)) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+        ORDER BY r.createdAt DESC
+        """)
+    Page<Reservation> findBySearchTerm(@Param("search") String searchTerm, Pageable pageable);
 }

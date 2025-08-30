@@ -98,7 +98,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         AND (:branchId IS NULL OR r.pickupBranch.id = :branchId OR r.dropoffBranch.id = :branchId)
         AND (:startDate IS NULL OR r.startDate >= :startDate)
         AND (:endDate IS NULL OR r.endDate <= :endDate)
-        ORDER BY r.createdAt DESC
+        ORDER BY r.id DESC
         """)
     Page<Reservation> findWithFilters(@Param("customerId") Long customerId,
                                      @Param("carId") Long carId,
@@ -131,7 +131,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
             LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
         )
-        ORDER BY r.createdAt DESC
+        ORDER BY r.id DESC
         """)
     Page<Reservation> findBySearchTerm(@Param("search") String searchTerm, Pageable pageable);
 
@@ -164,7 +164,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
             LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
         )
-        ORDER BY r.createdAt DESC
+        ORDER BY r.id DESC
         """)
     Page<Reservation> findWithFiltersAndSearch(@Param("customerId") Long customerId,
                                               @Param("carId") Long carId,

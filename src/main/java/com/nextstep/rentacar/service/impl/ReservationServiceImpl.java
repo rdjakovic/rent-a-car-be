@@ -194,16 +194,9 @@ public class ReservationServiceImpl implements ReservationService {
         // Validate and sanitize search parameter
         String sanitizedSearch = validateAndSanitizeSearch(search);
 
-        // If search is provided, use search-optimized query
-        if (sanitizedSearch != null && !sanitizedSearch.trim().isEmpty()) {
-            return reservationRepository.findBySearchTerm(sanitizedSearch, pageable)
-                    .map(reservationMapper::toResponseDto);
-        }
-
-        // Otherwise, use existing filter logic
-        if (startDate == null) startDate = LocalDate.now().minusYears(50); // broad default
-        if (endDate == null) endDate = LocalDate.now().plusYears(50);
-        return reservationRepository.findReservationsInDateRange(customerId, carId, status, branchId, startDate, endDate, pageable)
+        // Use the unified method that handles both search and filters
+        return reservationRepository.findWithFiltersAndSearch(
+                customerId, carId, status, branchId, startDate, endDate, sanitizedSearch, pageable)
                 .map(reservationMapper::toResponseDto);
     }
 
@@ -238,9 +231,9 @@ public class ReservationServiceImpl implements ReservationService {
         String trimmed = search.trim();
         
         // Minimum length validation (requirement 2.4)
-        if (trimmed.length() < 2) {
-            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
-        }
+//        if (trimmed.length() < 2) {
+//            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
+//        }
 
         // Maximum length validation to prevent abuse
         if (trimmed.length() > 100) {

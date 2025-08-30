@@ -134,4 +134,44 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         ORDER BY r.createdAt DESC
         """)
     Page<Reservation> findBySearchTerm(@Param("search") String searchTerm, Pageable pageable);
+
+    /**
+     * Find reservations with comprehensive filters including search functionality.
+     * Combines search across multiple fields with traditional filters for maximum flexibility.
+     * Uses overlap detection for date ranges: finds reservations that overlap with the specified date range.
+     */
+    @Query("""
+        SELECT DISTINCT r FROM Reservation r 
+        LEFT JOIN r.customer c 
+        LEFT JOIN r.car car
+        LEFT JOIN r.pickupBranch pb
+        LEFT JOIN r.dropoffBranch db
+        WHERE (:customerId IS NULL OR r.customer.id = :customerId)
+        AND (:carId IS NULL OR r.car.id = :carId)
+        AND (:status IS NULL OR r.status = :status)
+        AND (:branchId IS NULL OR r.pickupBranch.id = :branchId OR r.dropoffBranch.id = :branchId)
+        AND (:startDate IS NULL OR r.endDate >= :startDate)
+        AND (:endDate IS NULL OR r.startDate <= :endDate)
+        AND (
+            :search IS NULL OR :search = '' OR
+            LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(c.email) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            c.phone LIKE CONCAT('%', :search, '%') OR
+            CAST(r.id AS string) LIKE CONCAT('%', :search, '%') OR
+            LOWER(car.make) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(car.model) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(CONCAT(car.year, ' ', car.make, ' ', car.model)) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
+            LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+        ORDER BY r.createdAt DESC
+        """)
+    Page<Reservation> findWithFiltersAndSearch(@Param("customerId") Long customerId,
+                                              @Param("carId") Long carId,
+                                              @Param("status") ReservationStatus status,
+                                              @Param("branchId") Long branchId,
+                                              @Param("startDate") LocalDate startDate,
+                                              @Param("endDate") LocalDate endDate,
+                                              @Param("search") String search,
+                                              Pageable pageable);
 }

@@ -77,4 +77,21 @@ public class BranchController {
     public ResponseEntity<List<BranchResponseDto>> byCountry(@RequestParam String country) {
         return ResponseEntity.ok(branchService.findByCountry(country));
     }
+
+    @Operation(
+            summary = "Find branches by name and city",
+            description = "Returns a list of branches filtered by both name and city, with optional pagination."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Successful operation", content = @Content(schema = @Schema(implementation = BranchResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid parameters", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
+    @GetMapping("/by-name-and-city")
+    public ResponseEntity<List<BranchResponseDto>> byNameAndCity(
+            @RequestParam String name,
+            @RequestParam String city,
+            @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(branchService.findByNameAndCity(name, city, pageable));
+    }
+
 }

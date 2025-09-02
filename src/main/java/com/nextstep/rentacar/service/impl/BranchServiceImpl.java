@@ -84,4 +84,9 @@ public class BranchServiceImpl implements BranchService {
     public List<BranchResponseDto> findByCountry(String country) {
         return branchRepository.findByCountry(country).stream().map(branchMapper::toResponseDto).toList();
     }
+
+    @Override
+    public List<BranchResponseDto> findByNameAndCity(String name, String city, Pageable pageable) {
+        return branchRepository.findByNameAndCity(name, city, pageable).stream().map(branchMapper::toResponseDto).toList();
+    }
 }

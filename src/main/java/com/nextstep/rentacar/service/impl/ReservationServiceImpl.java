@@ -46,9 +46,11 @@ public class ReservationServiceImpl implements ReservationService {
         Car car = carRepository.findById(request.getCarId())
                 .orElseThrow(() -> new EntityNotFoundException("Car not found: " + request.getCarId()));
         Branch pickup = branchRepository.findById(request.getPickupBranchId())
-                .orElseThrow(() -> new EntityNotFoundException("Pickup branch not found: " + request.getPickupBranchId()));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Pickup branch not found: " + request.getPickupBranchId()));
         Branch dropoff = branchRepository.findById(request.getDropoffBranchId())
-                .orElseThrow(() -> new EntityNotFoundException("Dropoff branch not found: " + request.getDropoffBranchId()));
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Dropoff branch not found: " + request.getDropoffBranchId()));
 
         ensureCarAvailable(car.getId(), request.getStartDate(), request.getEndDate(), null);
 
@@ -97,17 +99,20 @@ public class ReservationServiceImpl implements ReservationService {
         }
         if (!reservation.getPickupBranch().getId().equals(request.getPickupBranchId())) {
             Branch pickup = branchRepository.findById(request.getPickupBranchId())
-                    .orElseThrow(() -> new EntityNotFoundException("Pickup branch not found: " + request.getPickupBranchId()));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Pickup branch not found: " + request.getPickupBranchId()));
             reservation.setPickupBranch(pickup);
         }
         if (!reservation.getDropoffBranch().getId().equals(request.getDropoffBranchId())) {
             Branch dropoff = branchRepository.findById(request.getDropoffBranchId())
-                    .orElseThrow(() -> new EntityNotFoundException("Dropoff branch not found: " + request.getDropoffBranchId()));
+                    .orElseThrow(() -> new EntityNotFoundException(
+                            "Dropoff branch not found: " + request.getDropoffBranchId()));
             reservation.setDropoffBranch(dropoff);
         }
 
         // Ensure no overlaps (excluding this reservation)
-        ensureCarAvailable(reservation.getCar().getId(), request.getStartDate(), request.getEndDate(), reservation.getId());
+        ensureCarAvailable(reservation.getCar().getId(), request.getStartDate(), request.getEndDate(),
+                reservation.getId());
 
         long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
         if (days <= 0) {
@@ -167,25 +172,25 @@ public class ReservationServiceImpl implements ReservationService {
     @Override
     @Transactional(readOnly = true)
     public Page<ReservationResponseDto> listWithFilters(Long customerId,
-                                                        Long carId,
-                                                        ReservationStatus status,
-                                                        Long branchId,
-                                                        LocalDate startDate,
-                                                        LocalDate endDate,
-                                                        Pageable pageable) {
+            Long carId,
+            ReservationStatus status,
+            Long branchId,
+            LocalDate startDate,
+            LocalDate endDate,
+            Pageable pageable) {
         return listWithFilters(customerId, carId, status, branchId, startDate, endDate, null, pageable);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<ReservationResponseDto> listWithFilters(Long customerId,
-                                                        Long carId,
-                                                        ReservationStatus status,
-                                                        Long branchId,
-                                                        LocalDate startDate,
-                                                        LocalDate endDate,
-                                                        String search,
-                                                        Pageable pageable) {
+            Long carId,
+            ReservationStatus status,
+            Long branchId,
+            LocalDate startDate,
+            LocalDate endDate,
+            String search,
+            Pageable pageable) {
         // Validate date range
         if (startDate != null && endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("Invalid date range: endDate must be on/after startDate");
@@ -211,7 +216,8 @@ public class ReservationServiceImpl implements ReservationService {
 
     private void ensureCarAvailable(Long carId, LocalDate start, LocalDate end, Long excludeReservationId) {
         List<Reservation> overlaps = reservationRepository.findOverlappingReservations(carId, start, end);
-        boolean conflict = overlaps.stream().anyMatch(r -> excludeReservationId == null || !r.getId().equals(excludeReservationId));
+        boolean conflict = overlaps.stream()
+                .anyMatch(r -> excludeReservationId == null || !r.getId().equals(excludeReservationId));
         if (conflict) {
             throw new IllegalStateException("Car is not available for the selected dates");
         }
@@ -219,6 +225,7 @@ public class ReservationServiceImpl implements ReservationService {
 
     /**
      * Validates and sanitizes search parameter.
+     * 
      * @param search the raw search term
      * @return sanitized search term or null if invalid
      * @throws SearchValidationException if search term validation fails
@@ -229,11 +236,11 @@ public class ReservationServiceImpl implements ReservationService {
         }
 
         String trimmed = search.trim();
-        
+
         // Minimum length validation (requirement 2.4)
-//        if (trimmed.length() < 2) {
-//            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
-//        }
+        if (trimmed.length() < 2) {
+            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
+        }
 
         // Maximum length validation to prevent abuse
         if (trimmed.length() > 100) {
@@ -243,7 +250,7 @@ public class ReservationServiceImpl implements ReservationService {
         // Sanitize input - remove potentially dangerous characters
         // Allow alphanumeric, spaces, hyphens, dots, @, and common punctuation
         String sanitized = trimmed.replaceAll("[^a-zA-Z0-9\\s\\-\\.@_+()]", "");
-        
+
         if (sanitized.trim().isEmpty()) {
             throw new SearchValidationException(trimmed, "Search term contains only invalid characters");
         }

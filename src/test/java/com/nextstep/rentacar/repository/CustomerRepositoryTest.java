@@ -4,7 +4,7 @@ import com.nextstep.rentacar.domain.entity.Customer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.data.jpa.test.autoconfigure.DataJpaTest;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
@@ -12,9 +12,14 @@ import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.*;
 
+import org.springframework.context.annotation.Import;
+import com.nextstep.rentacar.config.JpaConfig;
+
 @DataJpaTest
+@Import(JpaConfig.class)
 class CustomerRepositoryTest {
-    @Autowired CustomerRepository customerRepository;
+    @Autowired
+    CustomerRepository customerRepository;
 
     private Customer customer(String email, String firstName, String lastName, String city, String license) {
         Customer c = new Customer();
@@ -63,4 +68,3 @@ class CustomerRepositoryTest {
         assertThat(noMatch.getContent()).isEmpty();
     }
 }
-

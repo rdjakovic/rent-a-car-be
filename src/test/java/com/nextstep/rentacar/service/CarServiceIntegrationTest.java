@@ -55,8 +55,7 @@ class CarServiceIntegrationTest {
                 "+1234567890",
                 "branch@example.com",
                 "Mon-Fri 9-17",
-                true
-        );
+                true);
         branchId = branchService.create(branch).getId();
     }
 
@@ -101,7 +100,7 @@ class CarServiceIntegrationTest {
         CarResponseDto created = carService.create(sampleCarRequest("1HGCM82633A004352"));
         assertThat(created.getId()).isNotNull();
         assertThat(created.getVin()).isEqualTo("1HGCM82633A004352");
-        
+
         // Update car
         CarRequestDto update = sampleCarRequest("1HGCM82633A004352");
         update.setColor("Blue");
@@ -128,8 +127,7 @@ class CarServiceIntegrationTest {
                 LocalDate.now().plusDays(10),
                 branchId,
                 branchId,
-                "Test reservation"
-        );
+                "Test reservation");
         ReservationResponseDto res = reservationService.create(rr);
         assertThat(res.getId()).isNotNull();
 
@@ -139,8 +137,7 @@ class CarServiceIntegrationTest {
                 LocalDate.now().plusDays(7),
                 LocalDate.now().plusDays(8),
                 null, null, null, null, null,
-                PageRequest.of(0, 10)
-        );
+                PageRequest.of(0, 10));
         assertThat(unavailable.getTotalElements()).isEqualTo(0);
 
         // Non-overlapping -> expect 1
@@ -149,8 +146,7 @@ class CarServiceIntegrationTest {
                 LocalDate.now().plusDays(11),
                 LocalDate.now().plusDays(12),
                 null, null, null, null, null,
-                PageRequest.of(0, 10)
-        );
+                PageRequest.of(0, 10));
         assertThat(available.getTotalElements()).isEqualTo(1);
 
         // VIN uniqueness
@@ -160,7 +156,7 @@ class CarServiceIntegrationTest {
     }
 
     @Test
-    @DisplayName("Restore car works even when entity manager is cleared (bypassing @Where)")
+    @DisplayName("Restore car works even when entity manager is cleared (bypassing @SQLRestriction)")
     void restoreWorksAfterEntityManagerClear() {
         CarResponseDto created = carService.create(sampleCarRequest("JH4KA9650MC000001"));
         // Soft delete

@@ -10,7 +10,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
-@Mapper(componentModel = "spring", uses = {BranchMapper.class})
+@Mapper(componentModel = "spring", uses = { BranchMapper.class })
 public interface CarMapper {
 
     @Mapping(target = "displayName", source = ".", qualifiedByName = "generateDisplayName")
@@ -29,6 +29,7 @@ public interface CarMapper {
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "lastServiceDate", ignore = true)
     @Mapping(target = "nextServiceDate", ignore = true)
+    @Mapping(target = "status", defaultExpression = "java(com.nextstep.rentacar.domain.enums.CarStatus.AVAILABLE)")
     Car toEntity(CarRequestDto carRequestDto);
 
     @Mapping(target = "id", ignore = true)

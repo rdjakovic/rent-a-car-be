@@ -39,61 +39,60 @@ public class SecurityConfig {
     @Profile("!local & !test")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                // Public endpoints
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/h2-console/**").permitAll()
-                .requestMatchers("/actuator/health", "/actuator/info").permitAll()
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
-                // Also permit custom OpenAPI path configured in application.yml
-                .requestMatchers("/api-docs", "/api-docs/**").permitAll()
-                
-                // Admin only endpoints
-                .requestMatchers(HttpMethod.POST, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasRole("ADMIN")
-                
-                // Employee endpoints
-                .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/reservations/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/reservations/*/status").hasAnyRole("ADMIN", "EMPLOYEE")
-                
-                // Customer endpoints
-                .requestMatchers(HttpMethod.POST, "/api/v1/customers/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/customers/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.POST, "/api/v1/reservations/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/customers/me/**").hasRole("CUSTOMER")
-                
-                // All other requests require authentication
-                .anyRequest().authenticated()
-            )
-            .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
+                        .requestMatchers("/api/v1/auth/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                        // Also permit custom OpenAPI path configured in application.yml
+                        .requestMatchers("/api-docs", "/api-docs/**").permitAll()
+
+                        // Admin only endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/branches/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/branches/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/branches/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasRole("ADMIN")
+
+                        // Employee endpoints
+                        .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/reservations/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/reservations/*/status")
+                        .hasAnyRole("ADMIN", "EMPLOYEE")
+
+                        // Customer endpoints
+                        .requestMatchers(HttpMethod.POST, "/api/v1/customers/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/api/v1/customers/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reservations/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/customers/me/**").hasRole("CUSTOMER")
+
+                        // All other requests require authentication
+                        .anyRequest().authenticated())
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         // H2 Console configuration (for dev environment)
-        http.headers(headers -> headers.frameOptions().sameOrigin());
+        http.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin()));
 
         return http.build();
     }
 
     @Bean
-    @Profile({"local", "test"})
+    @Profile({ "local", "test" })
     @Order(0)
     public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-            .authorizeHttpRequests(a -> a.anyRequest().permitAll());
+                .csrf(AbstractHttpConfigurer::disable)
+                .headers(h -> h.frameOptions(f -> f.sameOrigin()))
+                .authorizeHttpRequests(a -> a.anyRequest().permitAll());
         return http.build();
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -102,8 +101,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthenticationProvider authenticationProvider() {
-        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider();
-        authProvider.setUserDetailsService(userDetailsService);
+        DaoAuthenticationProvider authProvider = new DaoAuthenticationProvider(userDetailsService);
         authProvider.setPasswordEncoder(passwordEncoder());
         return authProvider;
     }

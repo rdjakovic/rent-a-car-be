@@ -3,7 +3,7 @@ package com.nextstep.rentacar.domain.entity;
 import com.nextstep.rentacar.domain.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,13 +15,13 @@ import java.util.List;
  */
 @Entity
 @Table(name = "cars")
-@Where(clause = "deleted = false")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-@ToString(callSuper = true, exclude = {"branch", "reservations", "maintenanceRecords"})
+@ToString(callSuper = true, exclude = { "branch", "reservations", "maintenanceRecords" })
 public class Car extends BaseEntity {
 
     @Column(name = "vin", nullable = false, unique = true, length = 17)
@@ -91,8 +91,8 @@ public class Car extends BaseEntity {
     private List<Maintenance> maintenanceRecords = new ArrayList<>();
 
     public Car(String vin, String make, String model, Integer year, CarCategory category,
-               TransmissionType transmission, FuelType fuelType, Integer seats,
-               BigDecimal dailyPrice, Branch branch) {
+            TransmissionType transmission, FuelType fuelType, Integer seats,
+            BigDecimal dailyPrice, Branch branch) {
         this.vin = vin;
         this.make = make;
         this.model = model;

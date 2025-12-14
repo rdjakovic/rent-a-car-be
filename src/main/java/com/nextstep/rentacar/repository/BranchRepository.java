@@ -22,6 +22,8 @@ public interface BranchRepository extends JpaRepository<Branch, Long> {
 
     Page<Branch> findByNameContainingIgnoreCase(String name, Pageable pageable);
 
+    List<Branch> findByNameAndCity(String name, String city, Pageable pageable);
+
     @Query("SELECT b FROM Branch b WHERE b.city = :city AND b.country = :country")
     List<Branch> findByCityAndCountry(@Param("city") String city, @Param("country") String country);
 

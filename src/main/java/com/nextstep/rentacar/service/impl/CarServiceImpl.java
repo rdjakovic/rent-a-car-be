@@ -143,6 +143,18 @@ public class CarServiceImpl implements CarService {
     private Specification<Car> buildCarSpecification(CarFilterDto filter) {
         return (Root<Car> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if (filter.getVin() != null && !filter.getVin().isEmpty()) {
+                predicates.add(cb.equal(root.get("vin"), filter.getVin()));
+            }
+            if (filter.getMake() != null && !filter.getMake().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("make")), "%" + filter.getMake().toLowerCase() + "%"));
+            }
+            if (filter.getModel() != null && !filter.getModel().isEmpty()) {
+                predicates.add(cb.like(cb.lower(root.get("model")), "%" + filter.getModel().toLowerCase() + "%"));
+            }
+            if (filter.getYear() != null) {
+                predicates.add(cb.equal(root.get("year"), filter.getYear()));
+            }
             if (filter.getCategory() != null) {
                 predicates.add(cb.equal(root.get("category"), filter.getCategory()));
             }
@@ -156,7 +168,7 @@ public class CarServiceImpl implements CarService {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("seats"), filter.getMinSeats()));
             }
             if (filter.getMaxPrice() != null) {
-                predicates.add(cb.lessThanOrEqualTo(root.get("price"), filter.getMaxPrice()));
+                predicates.add(cb.lessThanOrEqualTo(root.get("dailyPrice"), filter.getMaxPrice()));
             }
             // Note: availableFrom/availableTo filtering would require reservation logic, not just car fields.
             return cb.and(predicates.toArray(new Predicate[0]));

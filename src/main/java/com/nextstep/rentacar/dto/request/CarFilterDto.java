@@ -13,6 +13,10 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class CarFilterDto {
+    private String vin;
+    private String make;
+    private String model;
+    private Integer year;
     private CarCategory category;
     private TransmissionType transmission;
     private FuelType fuelType;
@@ -23,4 +27,3 @@ public class CarFilterDto {
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate availableTo;
 }
-

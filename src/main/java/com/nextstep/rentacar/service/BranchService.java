@@ -24,4 +24,6 @@ public interface BranchService {
     List<BranchResponseDto> findByCity(String city);
 
     List<BranchResponseDto> findByCountry(String country);
+
+    List<BranchResponseDto> findByNameAndCity(String name, String city, Pageable pageable);
 }

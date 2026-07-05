@@ -3,12 +3,14 @@ package com.nextstep.rentacar.service;
 import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.ReservationStatus;
 import com.nextstep.rentacar.dto.response.ReservationResponseDto;
+import com.nextstep.rentacar.exception.SearchValidationException;
 import com.nextstep.rentacar.mapper.ReservationMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.CustomerRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.impl.ReservationServiceImpl;
+import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -16,21 +18,20 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
-import java.util.Collections;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,6 +55,9 @@ class ReservationServiceTest {
     @Mock
     private ReservationMapper reservationMapper;
 
+    @Spy
+    private SimpleMeterRegistry meterRegistry;
+
     @Mock
     private Page<Reservation> mockReservationPage;
 
@@ -75,11 +79,12 @@ class ReservationServiceTest {
     class SearchParameterTests {
 
         @Test
-        @DisplayName("Should use search query when valid search term is provided")
+        @DisplayName("Should pass search term to unified query when valid search term is provided")
         void shouldUseSearchQueryWhenValidSearchTermProvided() {
             // Given
             String searchTerm = "john doe";
-            when(reservationRepository.findBySearchTerm(eq(searchTerm), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(searchTerm), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -89,17 +94,16 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findBySearchTerm(searchTerm, pageable);
-            verify(reservationRepository, never()).findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), any());
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(searchTerm), eq(pageable));
         }
 
         @Test
-        @DisplayName("Should use filter query when search term is null")
+        @DisplayName("Should pass null search to unified query when search term is null")
         void shouldUseFilterQueryWhenSearchTermIsNull() {
             // Given
-            when(reservationRepository.findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -109,17 +113,16 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
-            verify(reservationRepository).findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), eq(pageable));
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(pageable));
         }
 
         @Test
-        @DisplayName("Should use filter query when search term is empty")
+        @DisplayName("Should pass null search to unified query when search term is blank")
         void shouldUseFilterQueryWhenSearchTermIsEmpty() {
             // Given
-            when(reservationRepository.findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -129,30 +132,28 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
-            verify(reservationRepository).findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), eq(pageable));
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(pageable));
         }
 
         @Test
         @DisplayName("Should delegate to overloaded method when search parameter is not provided")
         void shouldDelegateToOverloadedMethodWhenSearchParameterNotProvided() {
             // Given
-            when(reservationRepository.findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    eq(1L), eq(2L), eq(ReservationStatus.PENDING), eq(3L), any(), any(), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
             // When
             Page<ReservationResponseDto> result = reservationService.listWithFilters(
-                    1L, 2L, ReservationStatus.PENDING, 3L, 
+                    1L, 2L, ReservationStatus.PENDING, 3L,
                     LocalDate.now(), LocalDate.now().plusDays(1), pageable);
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findReservationsInDateRange(
-                    eq(1L), eq(2L), eq(ReservationStatus.PENDING), eq(3L), 
-                    any(), any(), eq(pageable));
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    eq(1L), eq(2L), eq(ReservationStatus.PENDING), eq(3L), any(), any(), isNull(), eq(pageable));
         }
     }
 
@@ -169,10 +170,11 @@ class ReservationServiceTest {
             // When & Then
             assertThatThrownBy(() -> reservationService.listWithFilters(
                     null, null, null, null, null, null, shortSearch, pageable))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(SearchValidationException.class)
                     .hasMessage("Search term must be at least 2 characters long");
 
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
+            verify(reservationRepository, never()).findWithFiltersAndSearch(
+                    any(), any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -184,10 +186,11 @@ class ReservationServiceTest {
             // When & Then
             assertThatThrownBy(() -> reservationService.listWithFilters(
                     null, null, null, null, null, null, longSearch, pageable))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(SearchValidationException.class)
                     .hasMessage("Search term cannot exceed 100 characters");
 
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
+            verify(reservationRepository, never()).findWithFiltersAndSearch(
+                    any(), any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -199,11 +202,11 @@ class ReservationServiceTest {
             // When & Then
             assertThatThrownBy(() -> reservationService.listWithFilters(
                     null, null, null, null, null, null, invalidSearch, pageable))
-                    .isInstanceOf(IllegalArgumentException.class)
+                    .isInstanceOf(SearchValidationException.class)
                     .hasMessage("Search term contains only invalid characters");
 
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
-            verify(reservationRepository, never()).findReservationsInDateRange(any(), any(), any(), any(), any(), any(), any());
+            verify(reservationRepository, never()).findWithFiltersAndSearch(
+                    any(), any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -212,7 +215,8 @@ class ReservationServiceTest {
             // Given
             String searchWithInvalidChars = "john<script>alert('xss')</script>doe";
             String expectedSanitized = "johnscriptalert(xss)scriptdoe";
-            when(reservationRepository.findBySearchTerm(eq(expectedSanitized), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(expectedSanitized), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -222,7 +226,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findBySearchTerm(expectedSanitized, pageable);
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(expectedSanitized), eq(pageable));
         }
 
         @Test
@@ -230,8 +235,8 @@ class ReservationServiceTest {
         void shouldAcceptValidSearchTermsWithAllowedCharacters() {
             // Given
             String validSearch = "john.doe@email.com (123) 456-7890";
-            String expectedSanitized = "john.doe@email.com (123) 456-7890";
-            when(reservationRepository.findBySearchTerm(eq(expectedSanitized), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(validSearch), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -241,7 +246,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findBySearchTerm(expectedSanitized, pageable);
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(validSearch), eq(pageable));
         }
 
         @Test
@@ -250,7 +256,8 @@ class ReservationServiceTest {
             // Given
             String searchWithWhitespace = "  john doe  ";
             String expectedTrimmed = "john doe";
-            when(reservationRepository.findBySearchTerm(eq(expectedTrimmed), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(expectedTrimmed), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -260,7 +267,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findBySearchTerm(expectedTrimmed, pageable);
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(expectedTrimmed), eq(pageable));
         }
     }
 
@@ -281,9 +289,8 @@ class ReservationServiceTest {
                     .isInstanceOf(IllegalArgumentException.class)
                     .hasMessage("Invalid date range: endDate must be on/after startDate");
 
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
-            verify(reservationRepository, never()).findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), any());
+            verify(reservationRepository, never()).findWithFiltersAndSearch(
+                    any(), any(), any(), any(), any(), any(), any(), any());
         }
 
         @Test
@@ -292,8 +299,8 @@ class ReservationServiceTest {
             // Given
             LocalDate startDate = LocalDate.now();
             LocalDate endDate = LocalDate.now().plusDays(1);
-            when(reservationRepository.findReservationsInDateRange(
-                    any(), any(), any(), any(), eq(startDate), eq(endDate), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), eq(startDate), eq(endDate), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -303,8 +310,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findReservationsInDateRange(
-                    any(), any(), any(), any(), eq(startDate), eq(endDate), eq(pageable));
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), eq(startDate), eq(endDate), isNull(), eq(pageable));
         }
 
         @Test
@@ -312,8 +319,8 @@ class ReservationServiceTest {
         void shouldAcceptSameStartAndEndDate() {
             // Given
             LocalDate sameDate = LocalDate.now();
-            when(reservationRepository.findReservationsInDateRange(
-                    any(), any(), any(), any(), eq(sameDate), eq(sameDate), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), eq(sameDate), eq(sameDate), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -323,8 +330,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findReservationsInDateRange(
-                    any(), any(), any(), any(), eq(sameDate), eq(sameDate), eq(pageable));
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    isNull(), isNull(), isNull(), isNull(), eq(sameDate), eq(sameDate), isNull(), eq(pageable));
         }
     }
 
@@ -333,13 +340,14 @@ class ReservationServiceTest {
     class IntegrationWithExistingFiltersTests {
 
         @Test
-        @DisplayName("Should prioritize search over other filters when search is provided")
-        void shouldPrioritizeSearchOverOtherFiltersWhenSearchProvided() {
+        @DisplayName("Should pass both search term and filters to the unified query")
+        void shouldPassBothSearchAndFiltersToUnifiedQuery() {
             // Given
             String searchTerm = "john";
             Long customerId = 1L;
             ReservationStatus status = ReservationStatus.PENDING;
-            when(reservationRepository.findBySearchTerm(eq(searchTerm), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    eq(customerId), isNull(), eq(status), isNull(), isNull(), isNull(), eq(searchTerm), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -349,9 +357,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findBySearchTerm(searchTerm, pageable);
-            verify(reservationRepository, never()).findReservationsInDateRange(
-                    any(), any(), any(), any(), any(), any(), any());
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    eq(customerId), isNull(), eq(status), isNull(), isNull(), isNull(), eq(searchTerm), eq(pageable));
         }
 
         @Test
@@ -362,8 +369,8 @@ class ReservationServiceTest {
             Long carId = 2L;
             ReservationStatus status = ReservationStatus.CONFIRMED;
             Long branchId = 3L;
-            when(reservationRepository.findReservationsInDateRange(
-                    eq(customerId), eq(carId), eq(status), eq(branchId), any(), any(), eq(pageable)))
+            when(reservationRepository.findWithFiltersAndSearch(
+                    eq(customerId), eq(carId), eq(status), eq(branchId), isNull(), isNull(), isNull(), eq(pageable)))
                     .thenReturn(mockReservationPage);
             when(mockReservationPage.map(any(Function.class))).thenReturn(mockResponsePage);
 
@@ -373,9 +380,8 @@ class ReservationServiceTest {
 
             // Then
             assertThat(result).isEqualTo(mockResponsePage);
-            verify(reservationRepository).findReservationsInDateRange(
-                    eq(customerId), eq(carId), eq(status), eq(branchId), any(), any(), eq(pageable));
-            verify(reservationRepository, never()).findBySearchTerm(any(), any());
+            verify(reservationRepository).findWithFiltersAndSearch(
+                    eq(customerId), eq(carId), eq(status), eq(branchId), isNull(), isNull(), isNull(), eq(pageable));
         }
     }
 }

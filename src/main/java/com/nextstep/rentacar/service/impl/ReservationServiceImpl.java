@@ -14,8 +14,10 @@ import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.CustomerRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.ReservationService;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -25,17 +27,23 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
+@Slf4j
 public class ReservationServiceImpl implements ReservationService {
+
+    /** Response-time target for reservation search (requirement 1.5). */
+    private static final long SEARCH_DURATION_WARN_MS = 500;
 
     private final ReservationRepository reservationRepository;
     private final CustomerRepository customerRepository;
     private final CarRepository carRepository;
     private final BranchRepository branchRepository;
     private final ReservationMapper reservationMapper;
+    private final MeterRegistry meterRegistry;
 
     @Override
     public ReservationResponseDto create(ReservationRequestDto request) {
@@ -193,11 +201,25 @@ public class ReservationServiceImpl implements ReservationService {
 
         // Validate and sanitize search parameter
         String sanitizedSearch = validateAndSanitizeSearch(search);
+        boolean searchUsed = sanitizedSearch != null;
 
         // Use the unified method that handles both search and filters
-        return reservationRepository.findWithFiltersAndSearch(
-                customerId, carId, status, branchId, startDate, endDate, sanitizedSearch, pageable)
-                .map(reservationMapper::toResponseDto);
+        long startNanos = System.nanoTime();
+        Page<Reservation> result = reservationRepository.findWithFiltersAndSearch(
+                customerId, carId, status, branchId, startDate, endDate, sanitizedSearch, pageable);
+        long durationMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - startNanos);
+
+        meterRegistry.timer("reservation.search.duration", "search", Boolean.toString(searchUsed))
+                .record(durationMs, TimeUnit.MILLISECONDS);
+        log.debug("Reservation search completed in {} ms (searchUsed={}, totalResults={})",
+                durationMs, searchUsed, result.getTotalElements());
+        if (durationMs > SEARCH_DURATION_WARN_MS) {
+            log.warn("Reservation search exceeded {} ms target: {} ms (searchUsed={}, searchTermLength={}, totalResults={})",
+                    SEARCH_DURATION_WARN_MS, durationMs, searchUsed,
+                    searchUsed ? sanitizedSearch.length() : 0, result.getTotalElements());
+        }
+
+        return result.map(reservationMapper::toResponseDto);
     }
 
     private void validateDateRange(LocalDate start, LocalDate end) {
@@ -231,9 +253,9 @@ public class ReservationServiceImpl implements ReservationService {
         String trimmed = search.trim();
         
         // Minimum length validation (requirement 2.4)
-//        if (trimmed.length() < 2) {
-//            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
-//        }
+        if (trimmed.length() < 2) {
+            throw new SearchValidationException(trimmed, "Search term must be at least 2 characters long");
+        }
 
         // Maximum length validation to prevent abuse
         if (trimmed.length() > 100) {

@@ -1,13 +1,16 @@
 package com.nextstep.rentacar.repository;
 
+import com.nextstep.rentacar.config.JpaConfig;
 import com.nextstep.rentacar.domain.entity.*;
 import com.nextstep.rentacar.domain.enums.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -19,6 +22,7 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.*;
 
 @DataJpaTest
+@Import(JpaConfig.class)
 @Transactional
 class ReservationRepositoryTest {
 
@@ -305,6 +309,131 @@ class ReservationRepositoryTest {
         assertThat(results.getContent()).isNotEmpty();
         // Should find the reservation by ID
         assertThat(results.getContent()).anyMatch(r -> r.getId().equals(testReservation.getId()));
+    }
+
+    @Test
+    @DisplayName("findBySearchTerm should order exact reservation ID matches before other matches")
+    void findBySearchTerm_shouldOrderExactIdMatchFirst() {
+        // Make a NEWER reservation match reservation1's ID through the customer phone,
+        // so plain id-DESC ordering would put it first and only the priority ordering
+        // can place the exact-ID match at the top.
+        String exactId = reservation1.getId().toString();
+        Customer phoneCustomer = createCustomer("Phone", "Match", "phone.match@email.com", "+999" + exactId + "999");
+        Car phoneCar = createCar("Ford", "Focus", 2023, testBranch);
+        Reservation newerReservation = createReservation(phoneCustomer, phoneCar, testBranch, testBranch);
+
+        entityManager.persistAndFlush(phoneCustomer);
+        entityManager.persistAndFlush(phoneCar);
+        entityManager.persistAndFlush(newerReservation);
+        entityManager.clear();
+
+        Page<Reservation> results = reservationRepository.findBySearchTerm(exactId, PageRequest.of(0, 10));
+
+        assertThat(results.getContent())
+                .extracting(Reservation::getId)
+                .contains(reservation1.getId(), newerReservation.getId());
+        assertThat(results.getContent().get(0).getId()).isEqualTo(reservation1.getId());
+    }
+
+    @Nested
+    @DisplayName("findWithFiltersAndSearch")
+    class FindWithFiltersAndSearchTests {
+
+        private final Pageable pageable = PageRequest.of(0, 10);
+
+        @Test
+        @DisplayName("should return all reservations when all parameters are null")
+        void shouldReturnAllWhenAllParametersNull() {
+            Page<Reservation> results = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, null, null, null, null, pageable);
+
+            assertThat(results.getContent()).hasSize(3);
+        }
+
+        @Test
+        @DisplayName("should apply filters when search is null (backward compatibility)")
+        void shouldApplyFiltersWhenSearchIsNull() {
+            Page<Reservation> results = reservationRepository.findWithFiltersAndSearch(
+                    johnDoe.getId(), null, null, null, null, null, null, pageable);
+
+            assertThat(results.getContent()).hasSize(2);
+            assertThat(results.getContent())
+                    .extracting(r -> r.getCustomer().getId())
+                    .containsOnly(johnDoe.getId());
+        }
+
+        @Test
+        @DisplayName("should combine search term with status filter")
+        void shouldCombineSearchWithStatusFilter() {
+            // John has two PENDING reservations; confirm one of them
+            Reservation r1 = reservationRepository.findById(reservation1.getId()).orElseThrow();
+            r1.setStatus(ReservationStatus.CONFIRMED);
+            reservationRepository.saveAndFlush(r1);
+            entityManager.clear();
+
+            Page<Reservation> results = reservationRepository.findWithFiltersAndSearch(
+                    null, null, ReservationStatus.CONFIRMED, null, null, null, "john", pageable);
+
+            assertThat(results.getContent()).hasSize(1);
+            assertThat(results.getContent().get(0).getId()).isEqualTo(reservation1.getId());
+        }
+
+        @Test
+        @DisplayName("should combine search term with branch filter matching pickup or dropoff")
+        void shouldCombineSearchWithBranchFilter() {
+            // John's reservations: reservation1 (both branches = testBranch), reservation3 (both = secondBranch)
+            Page<Reservation> johnResults = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, secondBranch.getId(), null, null, "john", pageable);
+
+            assertThat(johnResults.getContent()).hasSize(1);
+            assertThat(johnResults.getContent().get(0).getId()).isEqualTo(reservation3.getId());
+
+            // Jane's reservation2 has pickup=testBranch, dropoff=secondBranch: must match via dropoff
+            Page<Reservation> janeResults = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, secondBranch.getId(), null, null, "jane", pageable);
+
+            assertThat(janeResults.getContent()).hasSize(1);
+            assertThat(janeResults.getContent().get(0).getId()).isEqualTo(reservation2.getId());
+        }
+
+        @Test
+        @DisplayName("should combine search term with overlapping date window")
+        void shouldCombineSearchWithDateWindow() {
+            // All reservations run from +7 to +14 days
+            Page<Reservation> overlapping = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, null,
+                    LocalDate.now().plusDays(10), LocalDate.now().plusDays(20), "john", pageable);
+
+            assertThat(overlapping.getContent()).hasSize(2);
+
+            Page<Reservation> nonOverlapping = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, null,
+                    LocalDate.now().plusDays(20), LocalDate.now().plusDays(30), "john", pageable);
+
+            assertThat(nonOverlapping.getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("should order exact reservation ID matches before other matches")
+        void shouldOrderExactIdMatchFirst() {
+            String exactId = reservation1.getId().toString();
+            Customer phoneCustomer = createCustomer("Phone", "Match", "phone.match2@email.com", "+999" + exactId + "999");
+            Car phoneCar = createCar("Ford", "Fiesta", 2023, testBranch);
+            Reservation newerReservation = createReservation(phoneCustomer, phoneCar, testBranch, testBranch);
+
+            entityManager.persistAndFlush(phoneCustomer);
+            entityManager.persistAndFlush(phoneCar);
+            entityManager.persistAndFlush(newerReservation);
+            entityManager.clear();
+
+            Page<Reservation> results = reservationRepository.findWithFiltersAndSearch(
+                    null, null, null, null, null, null, exactId, pageable);
+
+            assertThat(results.getContent())
+                    .extracting(Reservation::getId)
+                    .contains(reservation1.getId(), newerReservation.getId());
+            assertThat(results.getContent().get(0).getId()).isEqualTo(reservation1.getId());
+        }
     }
 
     // Helper methods for creating test entities

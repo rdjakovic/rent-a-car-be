@@ -12,6 +12,10 @@ spring:
         format_sql: true
         jdbc:
           time_zone: UTC
+  jackson:
+    # Jackson 3 auto-detects @AllArgsConstructor and nulls missing fields; keep default-ctor + setter binding (Jackson 2 behavior)
+    visibility:
+      creator: none
   flyway:
     locations: classpath:db/migration
     baseline-on-migrate: true

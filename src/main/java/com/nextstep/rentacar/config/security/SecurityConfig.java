@@ -3,6 +3,7 @@ package com.nextstep.rentacar.config.security;
 import com.nextstep.rentacar.service.auth.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import jakarta.servlet.DispatcherType;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -116,6 +117,19 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
         return config.getAuthenticationManager();
+    }
+
+    /**
+     * The JWT filter is a bean (so it can be injected into the security chains), which would also make
+     * Spring Boot register it as a plain servlet filter on every request. It must only run inside the
+     * security filter chains, so disable that extra registration.
+     */
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> jwtAuthenticationFilterRegistration(
+            JwtAuthenticationFilter jwtAuthenticationFilter) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registration = new FilterRegistrationBean<>(jwtAuthenticationFilter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean

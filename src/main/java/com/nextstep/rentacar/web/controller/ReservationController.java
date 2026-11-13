@@ -219,13 +219,10 @@ public class ReservationController {
         tags = {"Reservations"}
     )
     @ApiResponses({
+            // Schema is inferred from the return type (Page<ReservationResponseDto>)
             @ApiResponse(
-                responseCode = "200", 
-                description = "Successfully retrieved reservations",
-                content = @Content(
-                    schema = @Schema(implementation = Page.class),
-                    mediaType = "application/json"
-                )
+                responseCode = "200",
+                description = "Successfully retrieved reservations"
             ),
             @ApiResponse(
                 responseCode = "400", 

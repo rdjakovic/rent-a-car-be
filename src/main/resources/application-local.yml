@@ -22,9 +22,10 @@ logging:
 server:
   port: 8080
 
-jwt:
-  secret: local-development-secret-key-256-bits-long-for-hmac-sha256-algorithm
-  expiration: 3600000 # 1 hour for development
+app:
+  jwt:
+    secret: local-development-secret-key-256-bits-long-for-hmac-sha256-algorithm
+    expiration: 3600000 # 1 hour for development
 
 # Enable CORS for local development
 cors:

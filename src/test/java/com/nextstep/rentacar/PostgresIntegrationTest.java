@@ -43,6 +43,8 @@ class PostgresIntegrationTest {
         registry.add("spring.datasource.url", postgres::getJdbcUrl);
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
+        // prod has no default JWT secret (JWT_SECRET is required)
+        registry.add("app.jwt.secret", () -> "postgres-it-secret-key-at-least-32-characters-long");
     }
 
     @Autowired

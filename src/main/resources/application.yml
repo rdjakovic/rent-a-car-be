@@ -39,9 +39,11 @@ management:
     env:
       enabled: true
 
-jwt:
-  secret: ${JWT_SECRET:your-256-bit-secret-key-here-change-this-in-production}
-  expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+app:
+  jwt:
+    # No default: profiles without their own secret must set JWT_SECRET (validated at startup)
+    secret: ${JWT_SECRET:}
+    expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
 
 springdoc:
   api-docs:

@@ -11,7 +11,7 @@ spring:
   jpa:
     show-sql: true
   flyway:
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/dev-data
     schemas: public
 
 logging:

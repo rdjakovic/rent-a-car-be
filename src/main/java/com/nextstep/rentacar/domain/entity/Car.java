@@ -3,7 +3,7 @@ package com.nextstep.rentacar.domain.entity;
 import com.nextstep.rentacar.domain.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.Where;
+import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -15,7 +15,7 @@ import java.util.List;
  */
 @Entity
 @Table(name = "cars")
-@Where(clause = "deleted = false")
+@SQLRestriction("deleted = false")
 @Getter
 @Setter
 @NoArgsConstructor

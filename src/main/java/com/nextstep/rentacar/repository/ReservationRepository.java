@@ -111,11 +111,12 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
     /**
      * Find reservations by search term across multiple fields with optimized JOINs.
      * Searches across customer name, email, phone, reservation ID, car details, and branch names.
-     * Uses case-insensitive matching for text fields and orders by creation date.
+     * Uses case-insensitive matching for text fields; exact reservation-ID matches are ordered
+     * first, then newest reservations first.
      */
     @Query("""
-        SELECT DISTINCT r FROM Reservation r 
-        LEFT JOIN r.customer c 
+        SELECT r FROM Reservation r
+        LEFT JOIN r.customer c
         LEFT JOIN r.car car
         LEFT JOIN r.pickupBranch pb
         LEFT JOIN r.dropoffBranch db
@@ -131,7 +132,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
             LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
         )
-        ORDER BY r.id DESC
+        ORDER BY CASE WHEN :search IS NOT NULL AND CAST(r.id AS string) = :search THEN 0 ELSE 1 END, r.id DESC
         """)
     Page<Reservation> findBySearchTerm(@Param("search") String searchTerm, Pageable pageable);
 
@@ -139,10 +140,11 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
      * Find reservations with comprehensive filters including search functionality.
      * Combines search across multiple fields with traditional filters for maximum flexibility.
      * Uses overlap detection for date ranges: finds reservations that overlap with the specified date range.
+     * Exact reservation-ID matches are ordered first, then newest reservations first.
      */
     @Query("""
-        SELECT DISTINCT r FROM Reservation r 
-        LEFT JOIN r.customer c 
+        SELECT r FROM Reservation r
+        LEFT JOIN r.customer c
         LEFT JOIN r.car car
         LEFT JOIN r.pickupBranch pb
         LEFT JOIN r.dropoffBranch db
@@ -164,7 +166,7 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
             LOWER(pb.name) LIKE LOWER(CONCAT('%', :search, '%')) OR
             LOWER(db.name) LIKE LOWER(CONCAT('%', :search, '%'))
         )
-        ORDER BY r.id DESC
+        ORDER BY CASE WHEN :search IS NOT NULL AND CAST(r.id AS string) = :search THEN 0 ELSE 1 END, r.id DESC
         """)
     Page<Reservation> findWithFiltersAndSearch(@Param("customerId") Long customerId,
                                               @Param("carId") Long carId,

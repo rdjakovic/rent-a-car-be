@@ -1,26 +1,26 @@
 package com.nextstep.rentacar.config.security;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
+import lombok.ToString;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-import org.springframework.validation.annotation.Validated;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 
 @Data
 @Component
 @ConfigurationProperties(prefix = "app.jwt")
-@Validated
-public class JwtProperties {
+public class JwtProperties implements InitializingBean {
+
+    static final int MIN_SECRET_LENGTH = 32;
 
     /**
      * JWT secret key for HMAC signing (set via JWT_SECRET). No default: the app must not
      * start with a well-known key. HS256 needs at least 256 bits.
      */
-    @NotBlank(message = "app.jwt.secret must be set (JWT_SECRET)")
-    @Size(min = 32, message = "app.jwt.secret must be at least 32 characters (256 bits) for HS256")
+    @ToString.Exclude
     private String secret;
 
     /**
@@ -42,4 +42,19 @@ public class JwtProperties {
      * Algorithm used for signing
      */
     private String algorithm = "HS256";
+
+    /**
+     * Validated here instead of with bean-validation annotations: Spring Boot's startup failure
+     * report prints the rejected property value, which would leak the secret into the logs.
+     */
+    @Override
+    public void afterPropertiesSet() {
+        if (!StringUtils.hasText(secret)) {
+            throw new IllegalStateException("app.jwt.secret must be set (JWT_SECRET)");
+        }
+        if (secret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException("app.jwt.secret must be at least " + MIN_SECRET_LENGTH
+                    + " characters (256 bits) for HS256, but has " + secret.length());
+        }
+    }
 }

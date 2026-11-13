@@ -6,7 +6,7 @@ This document describes the enhanced API documentation and error handling for th
 
 ## API Endpoint
 
-### GET /api/reservations
+### GET /api/v1/reservations
 
 **Summary:** List reservations with optional filters, pagination and sorting
 
@@ -95,7 +95,7 @@ The API provides detailed error responses for search validation failures using t
 
 **Request:**
 ```http
-GET /api/reservations?search=x
+GET /api/v1/reservations?search=x
 ```
 
 **Response:**
@@ -105,8 +105,8 @@ GET /api/reservations?search=x
   "title": "Search Validation Error",
   "status": 400,
   "detail": "Search term must be at least 2 characters long",
-  "instance": "/api/reservations",
-  "path": "/api/reservations",
+  "instance": "/api/v1/reservations",
+  "path": "/api/v1/reservations",
   "searchTerm": "x",
   "validationError": "Search term must be at least 2 characters long",
   "searchRequirements": {
@@ -121,7 +121,7 @@ GET /api/reservations?search=x
 
 **Request:**
 ```http
-GET /api/reservations?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+GET /api/v1/reservations?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 ```
 
 **Response:**
@@ -131,8 +131,8 @@ GET /api/reservations?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
   "title": "Search Validation Error",
   "status": 400,
   "detail": "Search term cannot exceed 100 characters",
-  "instance": "/api/reservations",
-  "path": "/api/reservations",
+  "instance": "/api/v1/reservations",
+  "path": "/api/v1/reservations",
   "searchTerm": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   "validationError": "Search term cannot exceed 100 characters",
   "searchRequirements": {
@@ -147,7 +147,7 @@ GET /api/reservations?search=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 **Request:**
 ```http
-GET /api/reservations?search=!@#$%^&*
+GET /api/v1/reservations?search=!@#$%^&*
 ```
 
 **Response:**
@@ -157,8 +157,8 @@ GET /api/reservations?search=!@#$%^&*
   "title": "Search Validation Error",
   "status": 400,
   "detail": "Search term contains only invalid characters",
-  "instance": "/api/reservations",
-  "path": "/api/reservations",
+  "instance": "/api/v1/reservations",
+  "path": "/api/v1/reservations",
   "searchTerm": "!@#$%^&*",
   "validationError": "Search term contains only invalid characters",
   "searchRequirements": {
@@ -173,7 +173,7 @@ GET /api/reservations?search=!@#$%^&*
 
 **Request:**
 ```http
-GET /api/reservations?startDate=2024-12-31&endDate=2024-01-01
+GET /api/v1/reservations?startDate=2024-12-31&endDate=2024-01-01
 ```
 
 **Response:**
@@ -183,8 +183,8 @@ GET /api/reservations?startDate=2024-12-31&endDate=2024-01-01
   "title": "Bad Request",
   "status": 400,
   "detail": "Invalid date range: endDate must be on/after startDate",
-  "instance": "/api/reservations",
-  "path": "/api/reservations"
+  "instance": "/api/v1/reservations",
+  "path": "/api/v1/reservations"
 }
 ```
 

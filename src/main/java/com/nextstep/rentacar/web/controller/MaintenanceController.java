@@ -23,7 +23,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/maintenance")
+@RequestMapping("/api/v1/maintenance")
 @Validated
 public class MaintenanceController {
 

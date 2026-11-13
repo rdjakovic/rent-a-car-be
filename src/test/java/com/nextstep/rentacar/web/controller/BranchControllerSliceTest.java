@@ -79,7 +79,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("POST /api/branches - should create branch")
+    @DisplayName("POST /api/v1/branches - should create branch")
     @WithMockUser(roles = "ADMIN")
     void createBranch_shouldReturnCreatedBranch() throws Exception {
         // Given
@@ -87,7 +87,7 @@ class BranchControllerSliceTest {
         given(branchService.create(any(BranchRequestDto.class))).willReturn(sampleBranchResponse);
 
         // When & Then
-        mockMvc.perform(post("/api/branches")
+        mockMvc.perform(post("/api/v1/branches")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -100,7 +100,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("POST /api/branches - should validate request")
+    @DisplayName("POST /api/v1/branches - should validate request")
     @WithMockUser(roles = "ADMIN")
     void createBranch_withInvalidData_shouldReturn400() throws Exception {
         // Given - Branch without required fields
@@ -116,7 +116,7 @@ class BranchControllerSliceTest {
         );
 
         // When & Then
-        mockMvc.perform(post("/api/branches")
+        mockMvc.perform(post("/api/v1/branches")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -126,7 +126,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("GET /api/branches - should return paginated list")
+    @DisplayName("GET /api/v1/branches - should return paginated list")
     @WithMockUser(roles = "EMPLOYEE")
     void listBranches_shouldReturnPaginatedResults() throws Exception {
         // Given
@@ -149,7 +149,7 @@ class BranchControllerSliceTest {
         given(branchService.list(any(Pageable.class))).willReturn(page);
 
         // When & Then
-        mockMvc.perform(get("/api/branches")
+        mockMvc.perform(get("/api/v1/branches")
                 .param("page", "0")
                 .param("size", "10")
                 .param("sort", "name,asc"))
@@ -164,14 +164,14 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("GET /api/branches/{id} - should return branch by id")
+    @DisplayName("GET /api/v1/branches/{id} - should return branch by id")
     @WithMockUser(roles = "EMPLOYEE")
     void getBranchById_shouldReturnBranch() throws Exception {
         // Given
         given(branchService.getById(1L)).willReturn(sampleBranchResponse);
 
         // When & Then
-        mockMvc.perform(get("/api/branches/{id}", 1L))
+        mockMvc.perform(get("/api/v1/branches/{id}", 1L))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
@@ -181,7 +181,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("PUT /api/branches/{id} - should update branch")
+    @DisplayName("PUT /api/v1/branches/{id} - should update branch")
     @WithMockUser(roles = "ADMIN")
     void updateBranch_shouldReturnUpdatedBranch() throws Exception {
         // Given
@@ -193,7 +193,7 @@ class BranchControllerSliceTest {
         given(branchService.update(eq(1L), any(BranchRequestDto.class))).willReturn(updatedResponse);
 
         // When & Then
-        mockMvc.perform(put("/api/branches/{id}", 1L)
+        mockMvc.perform(put("/api/v1/branches/{id}", 1L)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -205,14 +205,14 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/branches/{id} - should delete branch")
+    @DisplayName("DELETE /api/v1/branches/{id} - should delete branch")
     @WithMockUser(roles = "ADMIN")
     void deleteBranch_shouldReturn204() throws Exception {
         // Given
         doNothing().when(branchService).delete(1L);
 
         // When & Then
-        mockMvc.perform(delete("/api/branches/{id}", 1L))
+        mockMvc.perform(delete("/api/v1/branches/{id}", 1L))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
@@ -220,7 +220,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("GET /api/branches/search - should search by name")
+    @DisplayName("GET /api/v1/branches/search - should search by name")
     @WithMockUser(roles = "EMPLOYEE")
     void searchBranchesByName_shouldReturnFilteredResults() throws Exception {
         // Given
@@ -233,7 +233,7 @@ class BranchControllerSliceTest {
         given(branchService.searchByName(eq("Test"), any(Pageable.class))).willReturn(searchResults);
 
         // When & Then
-        mockMvc.perform(get("/api/branches/search")
+        mockMvc.perform(get("/api/v1/branches/search")
                 .param("name", "Test")
                 .param("page", "0")
                 .param("size", "10"))
@@ -246,7 +246,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("GET /api/branches/by-city - should return branches by city")
+    @DisplayName("GET /api/v1/branches/by-city - should return branches by city")
     @WithMockUser(roles = "EMPLOYEE")
     void getBranchesByCity_shouldReturnFilteredList() throws Exception {
         // Given
@@ -254,7 +254,7 @@ class BranchControllerSliceTest {
         given(branchService.findByCity("New York")).willReturn(cityBranches);
 
         // When & Then
-        mockMvc.perform(get("/api/branches/by-city")
+        mockMvc.perform(get("/api/v1/branches/by-city")
                 .param("city", "New York"))
                 .andDo(print())
                 .andExpect(status().isOk())
@@ -265,7 +265,7 @@ class BranchControllerSliceTest {
     }
 
     @Test
-    @DisplayName("GET /api/branches/by-country - should return branches by country")
+    @DisplayName("GET /api/v1/branches/by-country - should return branches by country")
     @WithMockUser(roles = "EMPLOYEE")
     void getBranchesByCountry_shouldReturnFilteredList() throws Exception {
         // Given
@@ -273,7 +273,7 @@ class BranchControllerSliceTest {
         given(branchService.findByCountry("USA")).willReturn(countryBranches);
 
         // When & Then
-        mockMvc.perform(get("/api/branches/by-country")
+        mockMvc.perform(get("/api/v1/branches/by-country")
                 .param("country", "USA"))
                 .andDo(print())
                 .andExpect(status().isOk())

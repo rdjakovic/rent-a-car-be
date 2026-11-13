@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/reservations")
+@RequestMapping("/api/v1/reservations")
 @Validated
 @Tag(name = "Reservations", description = "Reservation management operations")
 public class ReservationController {
@@ -219,13 +219,10 @@ public class ReservationController {
         tags = {"Reservations"}
     )
     @ApiResponses({
+            // Schema is inferred from the return type (Page<ReservationResponseDto>)
             @ApiResponse(
-                responseCode = "200", 
-                description = "Successfully retrieved reservations",
-                content = @Content(
-                    schema = @Schema(implementation = Page.class),
-                    mediaType = "application/json"
-                )
+                responseCode = "200",
+                description = "Successfully retrieved reservations"
             ),
             @ApiResponse(
                 responseCode = "400", 
@@ -243,7 +240,7 @@ public class ReservationController {
                                   "title": "Bad Request",
                                   "status": 400,
                                   "detail": "Search term must be at least 2 characters long",
-                                  "path": "/api/reservations"
+                                  "path": "/api/v1/reservations"
                                 }
                                 """
                         ),
@@ -256,7 +253,7 @@ public class ReservationController {
                                   "title": "Bad Request",
                                   "status": 400,
                                   "detail": "Search term cannot exceed 100 characters",
-                                  "path": "/api/reservations"
+                                  "path": "/api/v1/reservations"
                                 }
                                 """
                         ),
@@ -269,7 +266,7 @@ public class ReservationController {
                                   "title": "Bad Request",
                                   "status": 400,
                                   "detail": "Search term contains only invalid characters",
-                                  "path": "/api/reservations"
+                                  "path": "/api/v1/reservations"
                                 }
                                 """
                         ),
@@ -282,7 +279,7 @@ public class ReservationController {
                                   "title": "Bad Request",
                                   "status": 400,
                                   "detail": "Invalid date range: endDate must be on/after startDate",
-                                  "path": "/api/reservations"
+                                  "path": "/api/v1/reservations"
                                 }
                                 """
                         )

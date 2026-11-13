@@ -30,19 +30,19 @@ class WebExceptionHandlingIntegrationTest {
     @Test
     @DisplayName("404 -> ProblemDetail when entity not found")
     void notFoundProblemDetail() throws Exception {
-        mockMvc.perform(get("/api/cars/{id}", 999999))
+        mockMvc.perform(get("/api/v1/cars/{id}", 999999))
                 .andExpect(status().isNotFound())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Not Found"))
                 .andExpect(jsonPath("$.detail", containsString("Car not found")))
-                .andExpect(jsonPath("$.path").value("/api/cars/999999"));
+                .andExpect(jsonPath("$.path").value("/api/v1/cars/999999"));
     }
 
     @Test
     @DisplayName("400 -> ProblemDetail for invalid request body validation errors")
     void validationErrorsProblemDetail() throws Exception {
         // Empty body for customer -> many @NotBlank/@NotNull fail
-        mockMvc.perform(post("/api/customers")
+        mockMvc.perform(post("/api/v1/customers")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
                 .andExpect(status().isBadRequest())
@@ -56,7 +56,7 @@ class WebExceptionHandlingIntegrationTest {
     @Test
     @DisplayName("400 -> ProblemDetail for invalid date range (IllegalArgumentException)")
     void illegalArgumentProblemDetail() throws Exception {
-        mockMvc.perform(get("/api/cars/available")
+        mockMvc.perform(get("/api/v1/cars/available")
                         .param("branchId", "1")
                         .param("startDate", LocalDate.now().plusDays(3).toString())
                         .param("endDate", LocalDate.now().plusDays(1).toString()))
@@ -64,7 +64,7 @@ class WebExceptionHandlingIntegrationTest {
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Bad Request"))
                 .andExpect(jsonPath("$.detail", containsString("Invalid date range")))
-                .andExpect(jsonPath("$.path", containsString("/api/cars/available")));
+                .andExpect(jsonPath("$.path", containsString("/api/v1/cars/available")));
     }
 
     @Test
@@ -83,7 +83,7 @@ class WebExceptionHandlingIntegrationTest {
         );
         String branchJson = objectMapper.writeValueAsString(branchBody);
         Long branchId = objectMapper.readTree(
-                mockMvc.perform(post("/api/branches")
+                mockMvc.perform(post("/api/v1/branches")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(branchJson))
                         .andExpect(status().isOk())
@@ -108,7 +108,7 @@ class WebExceptionHandlingIntegrationTest {
                 Map.entry("insurancePolicy", "POL")
         );
         Long carId = objectMapper.readTree(
-                mockMvc.perform(post("/api/cars")
+                mockMvc.perform(post("/api/v1/cars")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(carBody)))
                         .andExpect(status().isOk())
@@ -129,7 +129,7 @@ class WebExceptionHandlingIntegrationTest {
                 "licenseExpiryDate", LocalDate.now().plusYears(2).toString()
         );
         Long customerId = objectMapper.readTree(
-                mockMvc.perform(post("/api/customers")
+                mockMvc.perform(post("/api/v1/customers")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(customerBody)))
                         .andExpect(status().isOk())
@@ -147,7 +147,7 @@ class WebExceptionHandlingIntegrationTest {
                 "notes", "test"
         );
         Long reservationId = objectMapper.readTree(
-                mockMvc.perform(post("/api/reservations")
+                mockMvc.perform(post("/api/v1/reservations")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(reservationBody)))
                         .andExpect(status().isOk())
@@ -155,11 +155,11 @@ class WebExceptionHandlingIntegrationTest {
         ).get("id").asLong();
 
         // Attempt to complete while still PENDING -> IllegalStateException -> 409
-        mockMvc.perform(post("/api/reservations/{id}/complete", reservationId))
+        mockMvc.perform(post("/api/v1/reservations/{id}/complete", reservationId))
                 .andExpect(status().isConflict())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_PROBLEM_JSON))
                 .andExpect(jsonPath("$.title").value("Conflict"))
                 .andExpect(jsonPath("$.detail", containsString("cannot be completed")))
-                .andExpect(jsonPath("$.path", containsString("/api/reservations/" + reservationId + "/complete")));
+                .andExpect(jsonPath("$.path", containsString("/api/v1/reservations/" + reservationId + "/complete")));
     }
 }

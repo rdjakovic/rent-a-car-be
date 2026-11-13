@@ -58,19 +58,19 @@ public class SecurityConfig {
                 .requestMatchers("/api-docs", "/api-docs/**").permitAll()
                 
                 // Branches: anyone signed in can browse, only admins change them
-                .requestMatchers(HttpMethod.GET, "/api/branches/**").authenticated()
-                .requestMatchers("/api/branches/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").authenticated()
+                .requestMatchers("/api/v1/branches/**").hasRole("ADMIN")
 
                 // Cars: browsing for everyone signed in; deleted cars and changes are staff-only
-                .requestMatchers(HttpMethod.GET, "/api/cars/deleted").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/api/cars/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/cars/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/cars/*/restore").hasRole("ADMIN")
-                .requestMatchers("/api/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.GET, "/api/v1/cars/deleted").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/v1/cars/*/restore").hasRole("ADMIN")
+                .requestMatchers("/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
 
                 // Customer data, reservations and maintenance are staff-only
                 // (no ownership checks exist, so customers get no direct access)
-                .requestMatchers("/api/customers/**", "/api/reservations/**", "/api/maintenance/**")
+                .requestMatchers("/api/v1/customers/**", "/api/v1/reservations/**", "/api/v1/maintenance/**")
                     .hasAnyRole("ADMIN", "EMPLOYEE")
 
                 // All other requests require authentication

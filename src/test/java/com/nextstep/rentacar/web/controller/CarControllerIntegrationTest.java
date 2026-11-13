@@ -69,7 +69,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars - should return paginated list of cars")
+    @DisplayName("GET /api/v1/cars - should return paginated list of cars")
     @WithMockUser(roles = "ADMIN")
     void listCars_shouldReturnPaginatedResults() throws Exception {
         // Given
@@ -78,7 +78,7 @@ class CarControllerIntegrationTest {
         carService.create(aCar().asSUV().withBranchId(branchId).build());
 
         // When & Then
-        mockMvc.perform(get("/api/cars")
+        mockMvc.perform(get("/api/v1/cars")
                 .param("page", "0")
                 .param("size", "2")
                 .param("sort", "dailyPrice,desc"))
@@ -91,7 +91,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/cars - should create new car")
+    @DisplayName("POST /api/v1/cars - should create new car")
     @WithMockUser(roles = "ADMIN")
     void createCar_shouldReturnCreatedCar() throws Exception {
         // Given
@@ -102,7 +102,7 @@ class CarControllerIntegrationTest {
                 .build();
 
         // When & Then
-        mockMvc.perform(post("/api/cars")
+        mockMvc.perform(post("/api/v1/cars")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -116,7 +116,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/cars - should return 400 for invalid data")
+    @DisplayName("POST /api/v1/cars - should return 400 for invalid data")
     @WithMockUser(roles = "ADMIN")
     void createCar_withInvalidData_shouldReturn400() throws Exception {
         // Given - Car without required VIN
@@ -124,7 +124,7 @@ class CarControllerIntegrationTest {
         request.setVin(null);
 
         // When & Then
-        mockMvc.perform(post("/api/cars")
+        mockMvc.perform(post("/api/v1/cars")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -132,7 +132,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /api/cars - should return 409 for duplicate VIN")
+    @DisplayName("POST /api/v1/cars - should return 409 for duplicate VIN")
     @WithMockUser(roles = "ADMIN")
     void createCar_withDuplicateVin_shouldReturn409() throws Exception {
         // Given
@@ -145,7 +145,7 @@ class CarControllerIntegrationTest {
                 .build();
 
         // When & Then
-        mockMvc.perform(post("/api/cars")
+        mockMvc.perform(post("/api/v1/cars")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -153,14 +153,14 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/{id} - should return car by ID")
+    @DisplayName("GET /api/v1/cars/{id} - should return car by ID")
     @WithMockUser(roles = "EMPLOYEE")
     void getCarById_shouldReturnCar() throws Exception {
         // Given
         Long carId = carService.create(aCar().withBranchId(branchId).asHybrid().build()).getId();
 
         // When & Then
-        mockMvc.perform(get("/api/cars/{id}", carId))
+        mockMvc.perform(get("/api/v1/cars/{id}", carId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(carId))
@@ -170,16 +170,16 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/{id} - should return 404 for non-existent car")
+    @DisplayName("GET /api/v1/cars/{id} - should return 404 for non-existent car")
     @WithMockUser(roles = "EMPLOYEE")
     void getCarById_withNonExistentId_shouldReturn404() throws Exception {
-        mockMvc.perform(get("/api/cars/{id}", 99999L))
+        mockMvc.perform(get("/api/v1/cars/{id}", 99999L))
                 .andDo(print())
                 .andExpect(status().isNotFound());
     }
 
     @Test
-    @DisplayName("PUT /api/cars/{id} - should update car")
+    @DisplayName("PUT /api/v1/cars/{id} - should update car")
     @WithMockUser(roles = "ADMIN")
     void updateCar_shouldReturnUpdatedCar() throws Exception {
         // Given
@@ -192,7 +192,7 @@ class CarControllerIntegrationTest {
                 .build();
 
         // When & Then
-        mockMvc.perform(put("/api/cars/{id}", carId)
+        mockMvc.perform(put("/api/v1/cars/{id}", carId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(updateRequest)))
                 .andDo(print())
@@ -203,25 +203,25 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("DELETE /api/cars/{id} - should soft delete car")
+    @DisplayName("DELETE /api/v1/cars/{id} - should soft delete car")
     @WithMockUser(roles = "ADMIN")
     void deleteCar_shouldSoftDeleteCar() throws Exception {
         // Given
         Long carId = carService.create(aCar().withBranchId(branchId).build()).getId();
 
         // When & Then
-        mockMvc.perform(delete("/api/cars/{id}", carId))
+        mockMvc.perform(delete("/api/v1/cars/{id}", carId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
 
         // Verify car is soft deleted (status = OUT_OF_SERVICE)
-        mockMvc.perform(get("/api/cars/{id}", carId))
+        mockMvc.perform(get("/api/v1/cars/{id}", carId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("OUT_OF_SERVICE"));
     }
 
     @Test
-    @DisplayName("POST /api/cars/{id}/restore - should restore soft deleted car")
+    @DisplayName("POST /api/v1/cars/{id}/restore - should restore soft deleted car")
     @WithMockUser(roles = "ADMIN")
     void restoreCar_shouldRestoreSoftDeletedCar() throws Exception {
         // Given
@@ -229,7 +229,7 @@ class CarControllerIntegrationTest {
         carService.delete(carId); // Soft delete first
 
         // When & Then
-        mockMvc.perform(post("/api/cars/{id}/restore", carId))
+        mockMvc.perform(post("/api/v1/cars/{id}/restore", carId))
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(carId))
@@ -237,7 +237,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/branch/{branchId} - should return cars by branch")
+    @DisplayName("GET /api/v1/cars/branch/{branchId} - should return cars by branch")
     @WithMockUser(roles = "EMPLOYEE")
     void getCarsByBranch_shouldReturnFilteredCars() throws Exception {
         // Given
@@ -248,7 +248,7 @@ class CarControllerIntegrationTest {
         carService.create(aCar().withBranchId(otherBranchId).asSUV().build());
 
         // When & Then
-        mockMvc.perform(get("/api/cars/branch/{branchId}", branchId)
+        mockMvc.perform(get("/api/v1/cars/branch/{branchId}", branchId)
                 .param("page", "0")
                 .param("size", "10"))
                 .andDo(print())
@@ -258,7 +258,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/available - should return available cars for date range")
+    @DisplayName("GET /api/v1/cars/available - should return available cars for date range")
     @WithMockUser(roles = "CUSTOMER")
     void getAvailableCars_shouldFilterByDateAndCriteria() throws Exception {
         // Given
@@ -286,7 +286,7 @@ class CarControllerIntegrationTest {
                 .build());
 
         // When & Then - Search for available cars in the reservation period
-        mockMvc.perform(get("/api/cars/available")
+        mockMvc.perform(get("/api/v1/cars/available")
                 .param("branchId", branchId.toString())
                 .param("startDate", LocalDate.now().plusDays(7).toString())
                 .param("endDate", LocalDate.now().plusDays(9).toString())
@@ -298,7 +298,7 @@ class CarControllerIntegrationTest {
                 .andExpect(jsonPath("$.totalElements").value(2));
 
         // Test with category filter
-        mockMvc.perform(get("/api/cars/available")
+        mockMvc.perform(get("/api/v1/cars/available")
                 .param("branchId", branchId.toString())
                 .param("startDate", LocalDate.now().plusDays(7).toString())
                 .param("endDate", LocalDate.now().plusDays(9).toString())
@@ -312,7 +312,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/available - with price filter")
+    @DisplayName("GET /api/v1/cars/available - with price filter")
     @WithMockUser(roles = "CUSTOMER")
     void getAvailableCars_withPriceFilter_shouldReturnFilteredCars() throws Exception {
         // Given
@@ -321,7 +321,7 @@ class CarControllerIntegrationTest {
         carService.create(aCar().withBranchId(branchId).asLuxury().withDailyPrice("199.99").build());
 
         // When & Then - Search with max price filter
-        mockMvc.perform(get("/api/cars/available")
+        mockMvc.perform(get("/api/v1/cars/available")
                 .param("branchId", branchId.toString())
                 .param("startDate", LocalDate.now().plusDays(1).toString())
                 .param("endDate", LocalDate.now().plusDays(3).toString())
@@ -335,7 +335,7 @@ class CarControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("GET /api/cars/deleted - should return only deleted cars")
+    @DisplayName("GET /api/v1/cars/deleted - should return only deleted cars")
     @WithMockUser(roles = "ADMIN")
     void getDeletedCars_shouldReturnOnlyDeletedCars() throws Exception {
         // Given
@@ -347,7 +347,7 @@ class CarControllerIntegrationTest {
         carService.delete(deletedCarId2);
 
         // When & Then
-        mockMvc.perform(get("/api/cars/deleted")
+        mockMvc.perform(get("/api/v1/cars/deleted")
                 .param("page", "0")
                 .param("size", "10"))
                 .andDo(print())
@@ -359,7 +359,7 @@ class CarControllerIntegrationTest {
     @Test
     @DisplayName("Security - Unauthorized access should return 403")
     void accessWithoutAuthentication_shouldReturn403() throws Exception {
-        mockMvc.perform(get("/api/cars"))
+        mockMvc.perform(get("/api/v1/cars"))
                 .andDo(print())
                 .andExpect(status().isOk());
     }
@@ -370,7 +370,7 @@ class CarControllerIntegrationTest {
     void createCar_asCustomer_shouldReturn403() throws Exception {
         CarRequestDto request = aCar().withBranchId(branchId).build();
 
-        mockMvc.perform(post("/api/cars")
+        mockMvc.perform(post("/api/v1/cars")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andDo(print())
@@ -383,7 +383,7 @@ class CarControllerIntegrationTest {
     void deleteCar_asEmployee_shouldReturn403() throws Exception {
         Long carId = carService.create(aCar().withBranchId(branchId).build()).getId();
 
-        mockMvc.perform(delete("/api/cars/{id}", carId))
+        mockMvc.perform(delete("/api/v1/cars/{id}", carId))
                 .andDo(print())
                 .andExpect(status().isNoContent());
     }

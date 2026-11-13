@@ -47,7 +47,7 @@ class ReservationSearchErrorHandlingTest {
         )).willThrow(new SearchValidationException(shortSearchTerm, "Search term must be at least 2 characters long"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", shortSearchTerm))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -56,7 +56,7 @@ class ReservationSearchErrorHandlingTest {
                 .andExpect(jsonPath("$.title").value("Search Validation Error"))
                 .andExpect(jsonPath("$.status").value(400))
                 .andExpect(jsonPath("$.detail").value("Search term must be at least 2 characters long"))
-                .andExpect(jsonPath("$.path").value("/api/reservations"))
+                .andExpect(jsonPath("$.path").value("/api/v1/reservations"))
                 .andExpect(jsonPath("$.searchTerm").value("a"))
                 .andExpect(jsonPath("$.validationError").value("Search term must be at least 2 characters long"))
                 .andExpect(jsonPath("$.searchRequirements").exists())
@@ -76,7 +76,7 @@ class ReservationSearchErrorHandlingTest {
         )).willThrow(new SearchValidationException(longSearchTerm, "Search term cannot exceed 100 characters"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", longSearchTerm))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -96,7 +96,7 @@ class ReservationSearchErrorHandlingTest {
         )).willThrow(new SearchValidationException(invalidSearchTerm, "Search term contains only invalid characters"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", invalidSearchTerm))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -116,7 +116,7 @@ class ReservationSearchErrorHandlingTest {
         )).willThrow(new IllegalArgumentException("Invalid date range: endDate must be on/after startDate"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", "test"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
@@ -138,7 +138,7 @@ class ReservationSearchErrorHandlingTest {
         )).willReturn((Page) emptyPage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", validSearchTerm))
                 .andDo(print())
                 .andExpect(status().isOk())

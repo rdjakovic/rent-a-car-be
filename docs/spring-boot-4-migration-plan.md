@@ -94,3 +94,29 @@ Work stays on the migration branch; `main` untouched until Phase 4 passes. Each 
 - [springdoc-openapi v3.0.1 release](https://newreleases.io/project/github/springdoc/springdoc-openapi/release/v3.0.1)
 - [OpenRewrite: Testcontainers 2 dependency renames](https://docs.openrewrite.org/recipes/java/testing/testcontainers/testcontainers2dependencies)
 - [Moderne: Spring Boot 4.x recipes](https://docs.moderne.io/user-documentation/recipes/recipe-catalog/java/spring/boot4/)
+
+## 6. Outcome (2026-11-13)
+
+Branch `migration-to-spring-boot-4.1`; Spring Boot **4.1.2**, **Java 25**, built with JDK 25.0.5.
+
+| Phase | Commit | Result |
+|---|---|---|
+| 0 Baseline on 3.5.16 | `@Where` → `@SQLRestriction` | 96 tests, 13 failures (same 13 on original 3.5.5) |
+| 1-2 Build file + main code | starters, springdoc 3.2.0, Testcontainers renames, `SecurityConfig` | compiles |
+| 3 Tests | `@MockitoBean`, new slice-test packages, Jackson 3 `ObjectMapper` | 96 tests, same 13 failures |
+| 3b ProblemDetail | explicit `type=about:blank` | unchanged API response |
+| 4 Verification | app run on H2 (local + non-local security chain), Swagger, actuator, register/login/JWT | OK |
+
+Deviations from the plan / findings:
+- **H2 pinned to 2.3.232** (`h2.version`): H2 2.4 (Boot 4.1 default) rejects Hibernate 7's ENUM-bound inserts into the Flyway VARCHAR+CHECK columns (24 `@DataJpaTest` errors). Root cause not investigated further.
+- **`spring.jackson.visibility.creator: none`**: Jackson 3 auto-detects Lombok `@AllArgsConstructor` and nulls missing fields (e.g. `CarRequestDto.status` default lost). The setting restores default-constructor + setter binding.
+- **ProblemDetail**: Spring 7 omits `type` when it is `about:blank`; handlers set it explicitly.
+- `flyway-database-postgresql` added (required for PostgreSQL with Flyway 10+; was missing before).
+- `nimbus-jose-jwt` 9.41.1 pin left as is (works).
+- Not done: `database-platform` removal in YAML (still only a Hibernate warning), Testcontainers dependencies are unused in code.
+
+Pre-existing issues noticed, not fixed:
+- 13 failing tests in `ReservationRepositoryTest` (seed data from Flyway breaks expected counts).
+- `SecurityConfig` rules match `/api/v1/branches|cars|reservations/**`, but controllers are mapped at `/api/...`; role rules therefore never apply (any authenticated user, e.g. CUSTOMER, can list branches/reservations).
+- Seeded `admin`/`admin123` login returns bad credentials (BCrypt seed hash not verified).
+- Local/test profile permits all requests; `/api/v1/auth/me` returns 500 there (no authentication).

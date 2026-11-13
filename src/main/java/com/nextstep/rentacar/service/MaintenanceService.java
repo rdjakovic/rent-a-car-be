@@ -1,8 +1,8 @@
 package com.nextstep.rentacar.service;
 
-import com.nextstep.rentacar.domain.entity.Maintenance;
 import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.domain.enums.MaintenanceType;
+import com.nextstep.rentacar.dto.response.MaintenanceResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -11,22 +11,22 @@ import java.util.List;
 
 public interface MaintenanceService {
 
-    Maintenance schedule(Long carId, MaintenanceType type, String description, LocalDate scheduledDate);
+    MaintenanceResponseDto schedule(Long carId, MaintenanceType type, String description, LocalDate scheduledDate);
 
-    Maintenance start(Long maintenanceId);
+    MaintenanceResponseDto start(Long maintenanceId);
 
-    Maintenance complete(Long maintenanceId);
+    MaintenanceResponseDto complete(Long maintenanceId);
 
-    Maintenance cancel(Long maintenanceId);
+    MaintenanceResponseDto cancel(Long maintenanceId);
 
-    Page<Maintenance> listByFilters(Long carId,
-                                    Long employeeId,
-                                    MaintenanceStatus status,
-                                    MaintenanceType maintenanceType,
-                                    Long branchId,
-                                    LocalDate startDate,
-                                    LocalDate endDate,
-                                    Pageable pageable);
+    Page<MaintenanceResponseDto> listByFilters(Long carId,
+                                               Long employeeId,
+                                               MaintenanceStatus status,
+                                               MaintenanceType maintenanceType,
+                                               Long branchId,
+                                               LocalDate startDate,
+                                               LocalDate endDate,
+                                               Pageable pageable);
 
-    List<Maintenance> findScheduledForDate(LocalDate date);
+    List<MaintenanceResponseDto> findScheduledForDate(LocalDate date);
 }

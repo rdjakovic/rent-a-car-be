@@ -14,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,9 +23,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    // Spring 7 / Jackson 3 omit the default type; keep it in the response body as before
+    private static final URI ABOUT_BLANK = URI.create("about:blank");
+
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleNotFound(EntityNotFoundException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Not Found");
         pd.setProperty("path", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(pd);
@@ -33,6 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(SearchValidationException.class)
     public ResponseEntity<ProblemDetail> handleSearchValidation(SearchValidationException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Search Validation Error");
         pd.setProperty("path", request.getRequestURI());
         
@@ -53,6 +59,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ProblemDetail> handleBadRequest(IllegalArgumentException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Bad Request");
         pd.setProperty("path", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(pd);
@@ -61,6 +68,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ProblemDetail> handleConflict(IllegalStateException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Conflict");
         pd.setProperty("path", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(pd);
@@ -69,6 +77,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<ProblemDetail> handleDuplicateResource(DuplicateResourceException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Conflict");
         pd.setProperty("path", request.getRequestURI());
         return ResponseEntity.status(HttpStatus.CONFLICT).body(pd);
@@ -77,6 +86,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ProblemDetail> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Validation Failed");
         pd.setDetail("Request validation failed");
         pd.setProperty("path", request.getRequestURI());
@@ -103,6 +113,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ProblemDetail> handleConstraintViolation(ConstraintViolationException ex, HttpServletRequest request) {
         ProblemDetail pd = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        pd.setType(ABOUT_BLANK);
         pd.setTitle("Validation Failed");
         pd.setDetail("Constraint violations occurred");
         pd.setProperty("path", request.getRequestURI());

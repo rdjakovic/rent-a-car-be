@@ -90,7 +90,12 @@ public class SecurityConfig {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-            .authorizeHttpRequests(a -> a.anyRequest().permitAll());
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -> a
+                // These endpoints need the caller's identity
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
+                .anyRequest().permitAll())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

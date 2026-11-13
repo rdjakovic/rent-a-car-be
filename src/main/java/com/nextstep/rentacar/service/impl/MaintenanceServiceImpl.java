@@ -5,6 +5,8 @@ import com.nextstep.rentacar.domain.entity.Maintenance;
 import com.nextstep.rentacar.domain.enums.CarStatus;
 import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.domain.enums.MaintenanceType;
+import com.nextstep.rentacar.dto.response.MaintenanceResponseDto;
+import com.nextstep.rentacar.mapper.MaintenanceMapper;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.MaintenanceRepository;
 import com.nextstep.rentacar.service.MaintenanceService;
@@ -25,9 +27,10 @@ public class MaintenanceServiceImpl implements MaintenanceService {
 
     private final MaintenanceRepository maintenanceRepository;
     private final CarRepository carRepository;
+    private final MaintenanceMapper maintenanceMapper;
 
     @Override
-    public Maintenance schedule(Long carId, MaintenanceType type, String description, LocalDate scheduledDate) {
+    public MaintenanceResponseDto schedule(Long carId, MaintenanceType type, String description, LocalDate scheduledDate) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new EntityNotFoundException("Car not found: " + carId));
         Maintenance maintenance = new Maintenance();
@@ -36,11 +39,11 @@ public class MaintenanceServiceImpl implements MaintenanceService {
         maintenance.setDescription(description);
         maintenance.setScheduledDate(scheduledDate);
         maintenance.setStatus(MaintenanceStatus.SCHEDULED);
-        return maintenanceRepository.save(maintenance);
+        return maintenanceMapper.toResponseDto(maintenanceRepository.save(maintenance));
     }
 
     @Override
-    public Maintenance start(Long maintenanceId) {
+    public MaintenanceResponseDto start(Long maintenanceId) {
         Maintenance maintenance = maintenanceRepository.findById(maintenanceId)
                 .orElseThrow(() -> new EntityNotFoundException("Maintenance not found: " + maintenanceId));
         maintenance.start();
@@ -48,11 +51,11 @@ public class MaintenanceServiceImpl implements MaintenanceService {
         Car car = maintenance.getCar();
         car.setStatus(CarStatus.MAINTENANCE);
         carRepository.save(car);
-        return maintenanceRepository.save(maintenance);
+        return maintenanceMapper.toResponseDto(maintenanceRepository.save(maintenance));
     }
 
     @Override
-    public Maintenance complete(Long maintenanceId) {
+    public MaintenanceResponseDto complete(Long maintenanceId) {
         Maintenance maintenance = maintenanceRepository.findById(maintenanceId)
                 .orElseThrow(() -> new EntityNotFoundException("Maintenance not found: " + maintenanceId));
         maintenance.complete();
@@ -62,11 +65,11 @@ public class MaintenanceServiceImpl implements MaintenanceService {
             car.setStatus(CarStatus.AVAILABLE);
             carRepository.save(car);
         }
-        return maintenanceRepository.save(maintenance);
+        return maintenanceMapper.toResponseDto(maintenanceRepository.save(maintenance));
     }
 
     @Override
-    public Maintenance cancel(Long maintenanceId) {
+    public MaintenanceResponseDto cancel(Long maintenanceId) {
         Maintenance maintenance = maintenanceRepository.findById(maintenanceId)
                 .orElseThrow(() -> new EntityNotFoundException("Maintenance not found: " + maintenanceId));
         maintenance.cancel();
@@ -76,18 +79,21 @@ public class MaintenanceServiceImpl implements MaintenanceService {
             car.setStatus(CarStatus.AVAILABLE);
             carRepository.save(car);
         }
-        return maintenanceRepository.save(maintenance);
+        return maintenanceMapper.toResponseDto(maintenanceRepository.save(maintenance));
     }
 
     @Override
     @Transactional(readOnly = true)
-    public Page<Maintenance> listByFilters(Long carId, Long employeeId, MaintenanceStatus status, MaintenanceType maintenanceType, Long branchId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        return maintenanceRepository.findWithFilters(carId, employeeId, status, maintenanceType, branchId, startDate, endDate, pageable);
+    public Page<MaintenanceResponseDto> listByFilters(Long carId, Long employeeId, MaintenanceStatus status, MaintenanceType maintenanceType, Long branchId, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        return maintenanceRepository.findWithFilters(carId, employeeId, status, maintenanceType, branchId, startDate, endDate, pageable)
+                .map(maintenanceMapper::toResponseDto);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<Maintenance> findScheduledForDate(LocalDate date) {
-        return maintenanceRepository.findScheduledForDate(date);
+    public List<MaintenanceResponseDto> findScheduledForDate(LocalDate date) {
+        return maintenanceRepository.findScheduledForDate(date).stream()
+                .map(maintenanceMapper::toResponseDto)
+                .toList();
     }
 }

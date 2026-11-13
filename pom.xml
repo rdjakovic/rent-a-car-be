@@ -28,10 +28,9 @@
 	</scm>
 	<properties>
 		<java.version>25</java.version>
-		<!-- H2 2.4 (Boot 4.1 default) rejects Hibernate 7 ENUM-bound inserts into Flyway VARCHAR+CHECK columns; keep 2.3 -->
-		<h2.version>2.3.232</h2.version>
-		<!-- H2 2.4 (Boot 4.1 default) rejects Hibernate 7 ENUM-bound inserts into Flyway VARCHAR+CHECK columns; keep 2.3 -->
-		<h2.version>2.3.232</h2.version>
+		<!-- H2 2.4.240 (Boot 4.1 default) fails IN (...) check constraints once the creating connection
+		     (Flyway's) is closed: "Check constraint invalid ... database has been closed". Fixed in 2.5. -->
+		<h2.version>2.5.252</h2.version>
 	</properties>
 	<dependencies>
 		<!-- Spring Boot Starters -->
@@ -75,12 +74,18 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<!-- H2 web console (local profile); a separate module since Boot 4 -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-h2console</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- JWT Security -->
 		<dependency>
 			<groupId>com.nimbusds</groupId>
 			<artifactId>nimbus-jose-jwt</artifactId>
-			<version>9.41.1</version>
+			<version>10.10</version>
 		</dependency>
 
 		<!-- API Documentation -->

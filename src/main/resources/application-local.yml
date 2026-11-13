@@ -10,9 +10,8 @@ spring:
       path: /h2-console
   jpa:
     show-sql: true
-    database-platform: org.hibernate.dialect.H2Dialect
   flyway:
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/dev-data
 
 logging:
   level:

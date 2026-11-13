@@ -120,3 +120,16 @@ Pre-existing issues noticed, not fixed:
 - `SecurityConfig` rules match `/api/v1/branches|cars|reservations/**`, but controllers are mapped at `/api/...`; role rules therefore never apply (any authenticated user, e.g. CUSTOMER, can list branches/reservations).
 - Seeded `admin`/`admin123` login returns bad credentials (BCrypt seed hash not verified).
 - Local/test profile permits all requests; `/api/v1/auth/me` returns 500 there (no authentication).
+
+## 7. Follow-ups (branch `migration-followups`, 2026-11-13)
+
+All items from section 6 were resolved; build is green (100 tests, incl. PostgreSQL via Testcontainers).
+
+- H2 2.4.240 bug identified (IN-list check constraints fail after the creating connection closes); now on H2 2.5.252.
+- `ReservationRepositoryTest` fixed (seeded reservations removed inside the test transaction).
+- Seed user passwords fixed for local/dev only (`db/dev-data/R__dev_seed_user_passwords.sql`); prod admin password must be set out-of-band.
+- Security rules now match `/api/...`; customer data, reservations and maintenance are staff-only; error dispatches permitted.
+- `/api/v1/auth/me` works on the local profile; H2 console restored (`spring-boot-h2console`).
+- Maintenance endpoints return `MaintenanceResponseDto` (were 500 on every call and would have leaked password hash/salary).
+- V1/V2 migrations made PostgreSQL-compatible (they never ran on PostgreSQL); `CHECK (start_date >= CURRENT_DATE)` dropped.
+- `database-platform` removed, nimbus-jose-jwt 10.10, Maven 3.9.16 wrapper, `.openidea` ignored.

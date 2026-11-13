@@ -109,7 +109,7 @@ CREATE TABLE customers (
     license_expiry_date DATE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    CHECK (date_of_birth <= DATEADD('YEAR', -18, CURRENT_DATE))
+    CHECK (date_of_birth <= CURRENT_DATE - INTERVAL '18' YEAR)
 );
 
 -- Create reservations table
@@ -132,7 +132,6 @@ CREATE TABLE reservations (
     FOREIGN KEY (pickup_branch_id) REFERENCES branches(id) ON DELETE RESTRICT,
     FOREIGN KEY (dropoff_branch_id) REFERENCES branches(id) ON DELETE RESTRICT,
     CHECK (end_date > start_date),
-    CHECK (start_date >= CURRENT_DATE),
     CHECK (total_price > 0),
     CHECK (status IN ('PENDING', 'CONFIRMED', 'CANCELLED', 'COMPLETED'))
 );

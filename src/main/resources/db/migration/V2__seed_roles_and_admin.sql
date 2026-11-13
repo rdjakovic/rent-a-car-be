@@ -58,32 +58,32 @@ INSERT INTO customers (first_name, last_name, email, phone, driver_license_no, d
 ('Ivan', 'Petrov', 'ivan.petrov@email.com', '+1-555-0309', 'DL444555666', '1984-04-09', '101 Aspen Ct', 'Denver', 'USA', '2029-04-09'),
 ('Julia', 'Rossi', 'julia.rossi@email.com', '+1-555-0310', 'DL555666778', '1992-10-21', '202 Poplar St', 'Las Vegas', 'USA', '2027-10-21');
 
--- Insert sample reservations (all future dates to comply with CHECK constraint)
+-- Insert sample reservations (dates relative to when the migration runs)
 INSERT INTO reservations (customer_id, car_id, start_date, end_date, pickup_branch_id, dropoff_branch_id, status, total_price, currency, notes) VALUES 
-(1, 1, DATEADD('DAY', 7, CURRENT_DATE), DATEADD('DAY', 10, CURRENT_DATE), 1, 1, 'CONFIRMED', 135.00, 'USD', 'Customer requested GPS navigation system'),
-(2, 2, DATEADD('DAY', 1, CURRENT_DATE), DATEADD('DAY', 4, CURRENT_DATE), 2, 2, 'CONFIRMED', 105.00, 'USD', 'Business trip rental'),
-(3, 3, DATEADD('DAY', 14, CURRENT_DATE), DATEADD('DAY', 21, CURRENT_DATE), 1, 3, 'CONFIRMED', 595.00, 'USD', 'Family vacation - one way rental'),
-(4, 4, DATEADD('DAY', 2, CURRENT_DATE), DATEADD('DAY', 5, CURRENT_DATE), 3, 3, 'CONFIRMED', 360.00, 'USD', 'Weekend luxury rental'),
-(5, 5, DATEADD('DAY', 3, CURRENT_DATE), DATEADD('DAY', 5, CURRENT_DATE), 1, 1, 'CONFIRMED', 130.00, 'USD', 'Moving assistance'),
-(6, 6, DATEADD('DAY', 1, CURRENT_DATE), DATEADD('DAY', 3, CURRENT_DATE), 2, 2, 'CONFIRMED', 110.00, 'USD', 'Electric vehicle test drive'),
-(7, 7, DATEADD('DAY', 21, CURRENT_DATE), DATEADD('DAY', 23, CURRENT_DATE), 3, 3, 'PENDING', 220.00, 'USD', 'Special occasion rental'),
-(8, 8, DATEADD('DAY', 8, CURRENT_DATE), DATEADD('DAY', 13, CURRENT_DATE), 2, 1, 'CONFIRMED', 650.00, 'USD', 'Corporate executive rental'),
-(9, 9, DATEADD('DAY', 5, CURRENT_DATE), DATEADD('DAY', 12, CURRENT_DATE), 1, 1, 'CONFIRMED', 266.00, 'USD', 'Eco-friendly city driving'),
-(10, 10, DATEADD('DAY', 28, CURRENT_DATE), DATEADD('DAY', 35, CURRENT_DATE), 3, 2, 'PENDING', 525.00, 'USD', 'Adventure trip rental'),
-(1, 11, DATEADD('DAY', 4, CURRENT_DATE), DATEADD('DAY', 6, CURRENT_DATE), 2, 2, 'CONFIRMED', 84.00, 'USD', 'Compact city rental'),
-(2, 12, DATEADD('DAY', 10, CURRENT_DATE), DATEADD('DAY', 17, CURRENT_DATE), 1, 1, 'CONFIRMED', 476.00, 'USD', 'Hybrid SUV for road trip'),
-(3, 13, DATEADD('DAY', 6, CURRENT_DATE), DATEADD('DAY', 10, CURRENT_DATE), 3, 3, 'CONFIRMED', 560.00, 'USD', 'Luxury business meetings'),
-(4, 1, DATEADD('DAY', 35, CURRENT_DATE), DATEADD('DAY', 42, CURRENT_DATE), 1, 2, 'PENDING', 315.00, 'USD', 'Extended business travel'),
-(5, 2, DATEADD('DAY', 15, CURRENT_DATE), DATEADD('DAY', 18, CURRENT_DATE), 2, 3, 'CONFIRMED', 105.00, 'USD', 'Airport transfer service'),
-(6, 3, DATEADD('DAY', 18, CURRENT_DATE), DATEADD('DAY', 25, CURRENT_DATE), 3, 1, 'CONFIRMED', 595.00, 'USD', 'Cross-country family trip'),
-(7, 4, DATEADD('DAY', 9, CURRENT_DATE), DATEADD('DAY', 12, CURRENT_DATE), 1, 1, 'CONFIRMED', 360.00, 'USD', 'Anniversary celebration'),
-(8, 5, DATEADD('DAY', 12, CURRENT_DATE), DATEADD('DAY', 19, CURRENT_DATE), 2, 2, 'CONFIRMED', 455.00, 'USD', 'Contractor work vehicle'),
-(9, 6, DATEADD('DAY', 11, CURRENT_DATE), DATEADD('DAY', 14, CURRENT_DATE), 3, 3, 'CONFIRMED', 165.00, 'USD', 'Green technology showcase'),
-(10, 7, DATEADD('DAY', 25, CURRENT_DATE), DATEADD('DAY', 27, CURRENT_DATE), 1, 1, 'PENDING', 220.00, 'USD', 'Sports car weekend');
+(1, 1, CURRENT_DATE + INTERVAL '7' DAY, CURRENT_DATE + INTERVAL '10' DAY, 1, 1, 'CONFIRMED', 135.00, 'USD', 'Customer requested GPS navigation system'),
+(2, 2, CURRENT_DATE + INTERVAL '1' DAY, CURRENT_DATE + INTERVAL '4' DAY, 2, 2, 'CONFIRMED', 105.00, 'USD', 'Business trip rental'),
+(3, 3, CURRENT_DATE + INTERVAL '14' DAY, CURRENT_DATE + INTERVAL '21' DAY, 1, 3, 'CONFIRMED', 595.00, 'USD', 'Family vacation - one way rental'),
+(4, 4, CURRENT_DATE + INTERVAL '2' DAY, CURRENT_DATE + INTERVAL '5' DAY, 3, 3, 'CONFIRMED', 360.00, 'USD', 'Weekend luxury rental'),
+(5, 5, CURRENT_DATE + INTERVAL '3' DAY, CURRENT_DATE + INTERVAL '5' DAY, 1, 1, 'CONFIRMED', 130.00, 'USD', 'Moving assistance'),
+(6, 6, CURRENT_DATE + INTERVAL '1' DAY, CURRENT_DATE + INTERVAL '3' DAY, 2, 2, 'CONFIRMED', 110.00, 'USD', 'Electric vehicle test drive'),
+(7, 7, CURRENT_DATE + INTERVAL '21' DAY, CURRENT_DATE + INTERVAL '23' DAY, 3, 3, 'PENDING', 220.00, 'USD', 'Special occasion rental'),
+(8, 8, CURRENT_DATE + INTERVAL '8' DAY, CURRENT_DATE + INTERVAL '13' DAY, 2, 1, 'CONFIRMED', 650.00, 'USD', 'Corporate executive rental'),
+(9, 9, CURRENT_DATE + INTERVAL '5' DAY, CURRENT_DATE + INTERVAL '12' DAY, 1, 1, 'CONFIRMED', 266.00, 'USD', 'Eco-friendly city driving'),
+(10, 10, CURRENT_DATE + INTERVAL '28' DAY, CURRENT_DATE + INTERVAL '35' DAY, 3, 2, 'PENDING', 525.00, 'USD', 'Adventure trip rental'),
+(1, 11, CURRENT_DATE + INTERVAL '4' DAY, CURRENT_DATE + INTERVAL '6' DAY, 2, 2, 'CONFIRMED', 84.00, 'USD', 'Compact city rental'),
+(2, 12, CURRENT_DATE + INTERVAL '10' DAY, CURRENT_DATE + INTERVAL '17' DAY, 1, 1, 'CONFIRMED', 476.00, 'USD', 'Hybrid SUV for road trip'),
+(3, 13, CURRENT_DATE + INTERVAL '6' DAY, CURRENT_DATE + INTERVAL '10' DAY, 3, 3, 'CONFIRMED', 560.00, 'USD', 'Luxury business meetings'),
+(4, 1, CURRENT_DATE + INTERVAL '35' DAY, CURRENT_DATE + INTERVAL '42' DAY, 1, 2, 'PENDING', 315.00, 'USD', 'Extended business travel'),
+(5, 2, CURRENT_DATE + INTERVAL '15' DAY, CURRENT_DATE + INTERVAL '18' DAY, 2, 3, 'CONFIRMED', 105.00, 'USD', 'Airport transfer service'),
+(6, 3, CURRENT_DATE + INTERVAL '18' DAY, CURRENT_DATE + INTERVAL '25' DAY, 3, 1, 'CONFIRMED', 595.00, 'USD', 'Cross-country family trip'),
+(7, 4, CURRENT_DATE + INTERVAL '9' DAY, CURRENT_DATE + INTERVAL '12' DAY, 1, 1, 'CONFIRMED', 360.00, 'USD', 'Anniversary celebration'),
+(8, 5, CURRENT_DATE + INTERVAL '12' DAY, CURRENT_DATE + INTERVAL '19' DAY, 2, 2, 'CONFIRMED', 455.00, 'USD', 'Contractor work vehicle'),
+(9, 6, CURRENT_DATE + INTERVAL '11' DAY, CURRENT_DATE + INTERVAL '14' DAY, 3, 3, 'CONFIRMED', 165.00, 'USD', 'Green technology showcase'),
+(10, 7, CURRENT_DATE + INTERVAL '25' DAY, CURRENT_DATE + INTERVAL '27' DAY, 1, 1, 'PENDING', 220.00, 'USD', 'Sports car weekend');
 
 -- Insert sample maintenance record
 INSERT INTO maintenance (car_id, employee_id, maintenance_type, description, scheduled_date, status, cost, currency, notes) VALUES 
-(1, 1, 'ROUTINE', 'Regular 15,000 mile service - oil change, filter replacement, tire rotation', DATEADD('DAY', 30, CURRENT_DATE), 'SCHEDULED', 150.00, 'USD', 'Due for scheduled maintenance');
+(1, 1, 'ROUTINE', 'Regular 15,000 mile service - oil change, filter replacement, tire rotation', CURRENT_DATE + INTERVAL '30' DAY, 'SCHEDULED', 150.00, 'USD', 'Due for scheduled maintenance');
 
 -- Insert sample payments (only for CONFIRMED reservations)
 INSERT INTO payments (reservation_id, amount, currency, status, payment_method, provider, transaction_ref, payment_date) VALUES 

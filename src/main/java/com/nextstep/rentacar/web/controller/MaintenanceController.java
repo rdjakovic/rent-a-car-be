@@ -1,9 +1,9 @@
 package com.nextstep.rentacar.web.controller;
 
-import com.nextstep.rentacar.domain.entity.Maintenance;
 import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.domain.enums.MaintenanceType;
 import com.nextstep.rentacar.dto.request.MaintenanceScheduleRequestDto;
+import com.nextstep.rentacar.dto.response.MaintenanceResponseDto;
 import com.nextstep.rentacar.service.MaintenanceService;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -36,32 +36,32 @@ public class MaintenanceController {
     @PostMapping("/schedule")
     @Operation(summary = "Schedule a maintenance")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Scheduled", content = @Content(schema = @Schema(implementation = com.nextstep.rentacar.domain.entity.Maintenance.class))),
+            @ApiResponse(responseCode = "200", description = "Scheduled", content = @Content(schema = @Schema(implementation = MaintenanceResponseDto.class))),
             @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
-    public ResponseEntity<Maintenance> schedule(@Valid @RequestBody MaintenanceScheduleRequestDto request) {
-        Maintenance m = maintenanceService.schedule(request.getCarId(), request.getType(), request.getDescription(), request.getScheduledDate());
+    public ResponseEntity<MaintenanceResponseDto> schedule(@Valid @RequestBody MaintenanceScheduleRequestDto request) {
+        MaintenanceResponseDto m = maintenanceService.schedule(request.getCarId(), request.getType(), request.getDescription(), request.getScheduledDate());
         return ResponseEntity.ok(m);
     }
 
     @PostMapping("/{id}/start")
-    public ResponseEntity<Maintenance> start(@PathVariable Long id) {
+    public ResponseEntity<MaintenanceResponseDto> start(@PathVariable Long id) {
         return ResponseEntity.ok(maintenanceService.start(id));
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<Maintenance> complete(@PathVariable Long id) {
+    public ResponseEntity<MaintenanceResponseDto> complete(@PathVariable Long id) {
         return ResponseEntity.ok(maintenanceService.complete(id));
     }
 
     @PostMapping("/{id}/cancel")
-    public ResponseEntity<Maintenance> cancel(@PathVariable Long id) {
+    public ResponseEntity<MaintenanceResponseDto> cancel(@PathVariable Long id) {
         return ResponseEntity.ok(maintenanceService.cancel(id));
     }
 
     @GetMapping
     @Operation(summary = "List maintenance records with optional filters, pagination and sorting")
-    public ResponseEntity<Page<Maintenance>> listWithFilters(
+    public ResponseEntity<Page<MaintenanceResponseDto>> listWithFilters(
             @RequestParam(required = false) Long carId,
             @RequestParam(required = false) Long employeeId,
             @RequestParam(required = false) MaintenanceStatus status,
@@ -74,7 +74,7 @@ public class MaintenanceController {
     }
 
     @GetMapping("/scheduled")
-    public ResponseEntity<List<Maintenance>> scheduledForDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+    public ResponseEntity<List<MaintenanceResponseDto>> scheduledForDate(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
         return ResponseEntity.ok(maintenanceService.findScheduledForDate(date));
     }
 }

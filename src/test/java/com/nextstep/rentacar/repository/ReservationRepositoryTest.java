@@ -47,6 +47,10 @@ class ReservationRepositoryTest {
 
     @BeforeEach
     void setUp() {
+        // Flyway V2 seeds demo reservations; remove them so counts only reflect this test's data
+        // (payments cascade; the test transaction rolls this back)
+        entityManager.getEntityManager().createNativeQuery("DELETE FROM reservations").executeUpdate();
+
         // Create branches
         testBranch = createBranch("Downtown Branch", "New York");
         secondBranch = createBranch("Airport Branch", "Los Angeles");

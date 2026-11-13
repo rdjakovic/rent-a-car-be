@@ -9,10 +9,9 @@ spring:
       minimum-idle: 2
       connection-timeout: 30000
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
   flyway:
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/dev-data
     schemas: public
 
 logging:

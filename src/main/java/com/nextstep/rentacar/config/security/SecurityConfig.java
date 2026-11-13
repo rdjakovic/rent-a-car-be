@@ -2,6 +2,7 @@ package com.nextstep.rentacar.config.security;
 
 import com.nextstep.rentacar.service.auth.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -43,7 +44,11 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                // Public endpoints
+                // Let error dispatches through so callers see the real status (e.g. 400) instead of 403
+                .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
+
+                // Public endpoints (me/refresh need the caller's identity)
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
@@ -51,26 +56,22 @@ public class SecurityConfig {
                 // Also permit custom OpenAPI path configured in application.yml
                 .requestMatchers("/api-docs", "/api-docs/**").permitAll()
                 
-                // Admin only endpoints
-                .requestMatchers(HttpMethod.POST, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/branches/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasRole("ADMIN")
-                
-                // Employee endpoints
-                .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE", "CUSTOMER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/reservations/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/reservations/*/status").hasAnyRole("ADMIN", "EMPLOYEE")
-                
-                // Customer endpoints
-                .requestMatchers(HttpMethod.POST, "/api/v1/customers/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.PUT, "/api/v1/customers/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.POST, "/api/v1/reservations/**").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.GET, "/api/v1/customers/me/**").hasRole("CUSTOMER")
-                
+                // Branches: anyone signed in can browse, only admins change them
+                .requestMatchers(HttpMethod.GET, "/api/branches/**").authenticated()
+                .requestMatchers("/api/branches/**").hasRole("ADMIN")
+
+                // Cars: browsing for everyone signed in; deleted cars and changes are staff-only
+                .requestMatchers(HttpMethod.GET, "/api/cars/deleted").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.GET, "/api/cars/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/cars/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/cars/*/restore").hasRole("ADMIN")
+                .requestMatchers("/api/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
+
+                // Customer data, reservations and maintenance are staff-only
+                // (no ownership checks exist, so customers get no direct access)
+                .requestMatchers("/api/customers/**", "/api/reservations/**", "/api/maintenance/**")
+                    .hasAnyRole("ADMIN", "EMPLOYEE")
+
                 // All other requests require authentication
                 .anyRequest().authenticated()
             )
@@ -90,7 +91,12 @@ public class SecurityConfig {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))
-            .authorizeHttpRequests(a -> a.anyRequest().permitAll());
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -> a
+                // These endpoints need the caller's identity
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
+                .anyRequest().permitAll())
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

@@ -74,6 +74,12 @@
 			<artifactId>h2</artifactId>
 			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+			<!-- H2 web console (local profile); a separate module since Boot 4 -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-h2console</artifactId>
+			<scope>runtime</scope>
+		</dependency>
 
 		<!-- JWT Security -->
 		<dependency>

@@ -78,7 +78,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search parameter")
+    @DisplayName("GET /api/v1/reservations - should handle search parameter")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withSearchParameter_shouldCallServiceWithSearch() throws Exception {
         // Given
@@ -88,7 +88,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -105,7 +105,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search with other filters")
+    @DisplayName("GET /api/v1/reservations - should handle search with other filters")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withSearchAndOtherFilters_shouldPassAllParameters() throws Exception {
         // Given
@@ -119,7 +119,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("customerId", "1")
                 .param("status", "CONFIRMED")
@@ -137,7 +137,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should work without search parameter (backward compatibility)")
+    @DisplayName("GET /api/v1/reservations - should work without search parameter (backward compatibility)")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withoutSearchParameter_shouldCallServiceWithoutSearch() throws Exception {
         // Given
@@ -146,7 +146,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("page", "0")
                 .param("size", "10"))
                 .andDo(print())
@@ -160,7 +160,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle empty search parameter")
+    @DisplayName("GET /api/v1/reservations - should handle empty search parameter")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withEmptySearchParameter_shouldPassEmptyString() throws Exception {
         // Given
@@ -169,7 +169,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", "")
                 .param("page", "0")
                 .param("size", "10"))
@@ -183,7 +183,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search parameter with special characters")
+    @DisplayName("GET /api/v1/reservations - should handle search parameter with special characters")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withSpecialCharactersInSearch_shouldPassToService() throws Exception {
         // Given
@@ -193,7 +193,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -206,7 +206,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search parameter with numeric values")
+    @DisplayName("GET /api/v1/reservations - should handle search parameter with numeric values")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withNumericSearch_shouldPassToService() throws Exception {
         // Given
@@ -216,7 +216,7 @@ class ReservationControllerTest {
         )).willReturn(samplePage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -229,7 +229,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search validation errors for too short search term")
+    @DisplayName("GET /api/v1/reservations - should handle search validation errors for too short search term")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withTooShortSearch_shouldReturn400WithDetails() throws Exception {
         // Given
@@ -239,7 +239,7 @@ class ReservationControllerTest {
         )).willThrow(new SearchValidationException(searchTerm, "Search term must be at least 2 characters long"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -258,7 +258,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search validation errors for too long search term")
+    @DisplayName("GET /api/v1/reservations - should handle search validation errors for too long search term")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withTooLongSearch_shouldReturn400WithDetails() throws Exception {
         // Given
@@ -268,7 +268,7 @@ class ReservationControllerTest {
         )).willThrow(new SearchValidationException(searchTerm, "Search term cannot exceed 100 characters"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -284,7 +284,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle search validation errors for invalid characters")
+    @DisplayName("GET /api/v1/reservations - should handle search validation errors for invalid characters")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withInvalidCharacters_shouldReturn400WithDetails() throws Exception {
         // Given
@@ -294,7 +294,7 @@ class ReservationControllerTest {
         )).willThrow(new SearchValidationException(searchTerm, "Search term contains only invalid characters"));
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))
@@ -310,7 +310,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should handle pagination with search")
+    @DisplayName("GET /api/v1/reservations - should handle pagination with search")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withSearchAndPagination_shouldReturnPaginatedResults() throws Exception {
         // Given
@@ -331,7 +331,7 @@ class ReservationControllerTest {
         )).willReturn(paginatedResults);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "2")
@@ -351,7 +351,7 @@ class ReservationControllerTest {
     }
 
     @Test
-    @DisplayName("GET /api/reservations - should return empty results for search with no matches")
+    @DisplayName("GET /api/v1/reservations - should return empty results for search with no matches")
     @WithMockUser(roles = "EMPLOYEE")
     void listReservations_withSearchNoMatches_shouldReturnEmptyPage() throws Exception {
         // Given
@@ -367,7 +367,7 @@ class ReservationControllerTest {
         )).willReturn(emptyPage);
 
         // When & Then
-        mockMvc.perform(get("/api/reservations")
+        mockMvc.perform(get("/api/v1/reservations")
                 .param("search", searchTerm)
                 .param("page", "0")
                 .param("size", "10"))

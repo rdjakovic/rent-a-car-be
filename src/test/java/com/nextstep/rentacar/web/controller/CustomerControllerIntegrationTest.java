@@ -48,7 +48,7 @@ class CustomerControllerIntegrationTest {
     }
 
     @Test
-    @DisplayName("/api/customers/searchany returns customers matching any field")
+    @DisplayName("/api/v1/customers/searchany returns customers matching any field")
     void searchAny_endpoint_returnsMatches() throws Exception {
         // Insert customers
         var c1 = validCustomer("john@example.com", "L100");
@@ -64,31 +64,31 @@ class CustomerControllerIntegrationTest {
         customerRepository.save(customerMapper.toEntity(c2));
 
         // Match by email
-        mockMvc.perform(get("/api/customers/searchany")
+        mockMvc.perform(get("/api/v1/customers/searchany")
                 .param("search", "john@example.com"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].email").value("john@example.com"));
 
         // Match by firstName
-        mockMvc.perform(get("/api/customers/searchany")
+        mockMvc.perform(get("/api/v1/customers/searchany")
                 .param("search", "Jane"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].firstName").value("Jane"));
 
         // Match by lastName
-        mockMvc.perform(get("/api/customers/searchany")
+        mockMvc.perform(get("/api/v1/customers/searchany")
                 .param("search", "Smith"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].lastName").value("Smith"));
 
         // Match by city
-        mockMvc.perform(get("/api/customers/searchany")
+        mockMvc.perform(get("/api/v1/customers/searchany")
                 .param("search", "Metropolis"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content[0].city").value("Metropolis"));
 
         // No match
-        mockMvc.perform(get("/api/customers/searchany")
+        mockMvc.perform(get("/api/v1/customers/searchany")
                 .param("search", "notfound"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content").isEmpty());

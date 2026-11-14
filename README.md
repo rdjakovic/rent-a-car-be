@@ -19,7 +19,10 @@ This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 requ
 # Run with local profile explicitly (Unix/macOS)
 ./mvnw spring-boot:run -Dspring-boot.run.arguments=--spring.profiles.active=local
 
-# Run with specific profile (e.g., dev)
+# Run with PostgreSQL in Docker (starts compose.yaml automatically; Docker Desktop must be running)
+./mvnw spring-boot:run -Dspring-boot.run.profiles=docker
+
+# Run with specific profile (e.g., dev, against your own PostgreSQL)
 ./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
 
 # Build the application
@@ -39,6 +42,11 @@ This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 requ
 ```
 
 ### Database
+The Flyway Maven plugin targets the dev/docker PostgreSQL (`localhost:5432/rentacar`) by default.
+The database must be running, e.g. start the app once with the `docker` profile or run `docker compose up -d`.
+For another database, pass `-Dflyway.url=... -Dflyway.user=... -Dflyway.password=...` and
+`-Dflyway.locations=filesystem:src/main/resources/db/migration` (never include `db/dev-data` outside local/dev).
+
 ```bash
 # Check database migrations
 ./mvnw flyway:info
@@ -46,9 +54,15 @@ This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 requ
 # Run migrations
 ./mvnw flyway:migrate
 
-# Reset database (WARNING: destructive)
-./mvnw flyway:clean flyway:migrate
+# Reset database (WARNING: destructive; clean is disabled unless explicitly enabled)
+./mvnw flyway:clean flyway:migrate -Dflyway.cleanDisabled=false
 ```
+
+### PostgreSQL in Docker (`docker` profile)
+- `compose.yaml` defines PostgreSQL 17; Spring Boot starts it when the app runs with the `docker` profile and connects to it automatically
+- The `docker` profile also activates `dev` (seed users `admin`/`admin123`, `john.doe`/`admin123`)
+- Data is kept in the `rent-a-car-be_postgres-data` volume; `docker compose down -v` deletes it
+- From the IDE, set the active profile to `docker` (e.g. program argument `--spring.profiles.active=docker` or env `SPRING_PROFILES_ACTIVE=docker`)
 
 ### Useful Development URLs (when running locally)
 - Application: http://localhost:8080
@@ -112,6 +126,7 @@ com.nextstep.rentacar/
 
 - **local**: H2 in-memory database (default)
 - **dev**: Local PostgreSQL database
+- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker
 - **test**: H2 in-memory database for integration tests
 - **prod**: Production PostgreSQL; requires `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `JWT_SECRET`
 
@@ -149,7 +164,7 @@ Initial data is created via Flyway migration `V2__seed_roles_and_admin.sql`:
 - **Admin user**: `admin`/`admin123`
 - **Employee user**: `john.doe`/`admin123`
 
-These passwords work only in the `local` and `dev` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
+These passwords work only in the `local`, `dev` and `docker` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
 - Sample branches, cars, customers, and reservations
 
 ## MapStruct Integration

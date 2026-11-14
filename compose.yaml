@@ -1,0 +1,16 @@
+# PostgreSQL for the 'docker' Spring profile (started automatically by spring-boot-docker-compose).
+# Credentials match the 'dev' profile and the flyway-maven-plugin defaults.
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: rentacar
+      POSTGRES_USER: rentacar
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+volumes:
+  postgres-data:

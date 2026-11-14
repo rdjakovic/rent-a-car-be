@@ -3,6 +3,13 @@ spring:
     name: rent-a-car
   profiles:
     active: local
+    group:
+      # 'docker' = dev settings + PostgreSQL from compose.yaml
+      docker: dev
+  docker:
+    compose:
+      # Only the 'docker' profile starts containers (see application-docker.yml)
+      enabled: false
   jpa:
     open-in-view: false
     hibernate:

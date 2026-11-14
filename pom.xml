@@ -75,6 +75,12 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<!-- Starts PostgreSQL from compose.yaml for the 'docker' profile; not packaged into the jar -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-docker-compose</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<!-- H2 web console (local profile); a separate module since Boot 4 -->
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-h2console</artifactId>
@@ -164,6 +170,37 @@
 						<arg>-Amapstruct.defaultComponentModel=spring</arg>
 					</compilerArgs>
 				</configuration>
+			</plugin>
+			<plugin>
+				<!-- Run migrations from Maven (flyway:info, flyway:migrate, ...). Defaults match the dev profile;
+				     override with -Dflyway.url / -Dflyway.user / -Dflyway.password / -Dflyway.locations
+				     or FLYWAY_* environment variables. Never include db/dev-data for other databases. -->
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<configuration>
+					<url>jdbc:postgresql://localhost:5432/rentacar</url>
+					<user>rentacar</user>
+					<password>password</password>
+					<schemas>
+						<schema>public</schema>
+					</schemas>
+					<locations>
+						<location>filesystem:src/main/resources/db/migration</location>
+						<location>filesystem:src/main/resources/db/dev-data</location>
+					</locations>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>${postgresql.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>${flyway.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>

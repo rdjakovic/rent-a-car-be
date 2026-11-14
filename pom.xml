@@ -166,6 +166,37 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<!-- Run migrations from Maven (flyway:info, flyway:migrate, ...). Defaults match the dev profile;
+				     override with -Dflyway.url / -Dflyway.user / -Dflyway.password / -Dflyway.locations
+				     or FLYWAY_* environment variables. Never include db/dev-data for other databases. -->
+				<groupId>org.flywaydb</groupId>
+				<artifactId>flyway-maven-plugin</artifactId>
+				<configuration>
+					<url>jdbc:postgresql://localhost:5432/rentacar</url>
+					<user>rentacar</user>
+					<password>password</password>
+					<schemas>
+						<schema>public</schema>
+					</schemas>
+					<locations>
+						<location>filesystem:src/main/resources/db/migration</location>
+						<location>filesystem:src/main/resources/db/dev-data</location>
+					</locations>
+				</configuration>
+				<dependencies>
+					<dependency>
+						<groupId>org.postgresql</groupId>
+						<artifactId>postgresql</artifactId>
+						<version>${postgresql.version}</version>
+					</dependency>
+					<dependency>
+						<groupId>org.flywaydb</groupId>
+						<artifactId>flyway-database-postgresql</artifactId>
+						<version>${flyway.version}</version>
+					</dependency>
+				</dependencies>
+			</plugin>
+			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>

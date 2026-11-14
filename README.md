@@ -4,7 +4,7 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-This is a **Rent-a-Car API** built with Spring Boot 3.5.5 and Java 21, providing a comprehensive car rental management system with JWT authentication and role-based authorization.
+This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 required to build and run), providing a comprehensive car rental management system with JWT authentication and role-based authorization.
 
 ## Common Commands
 
@@ -63,7 +63,7 @@ This is a **Rent-a-Car API** built with Spring Boot 3.5.5 and Java 21, providing
 The application follows a layered architecture with distinct domain entities:
 
 **Core Entities:**
-- **Car**: Vehicle inventory with soft delete capability (uses `@Where(clause = "deleted = false")`)
+- **Car**: Vehicle inventory with soft delete capability (uses `@SQLRestriction("deleted = false")`)
 - **Reservation**: Customer bookings with overlap prevention logic
 - **Customer**: Customer information with driver license validation
 - **Branch**: Rental locations where cars are picked up/dropped off
@@ -112,8 +112,8 @@ com.nextstep.rentacar/
 
 - **local**: H2 in-memory database (default)
 - **dev**: Local PostgreSQL database
-- **test**: Testcontainers with PostgreSQL for integration tests  
-- **prod**: Production PostgreSQL with placeholders
+- **test**: H2 in-memory database for integration tests
+- **prod**: Production PostgreSQL; requires `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `JWT_SECRET`
 
 ## Key Configuration Notes
 
@@ -124,8 +124,9 @@ com.nextstep.rentacar/
 - JPA auditing configured with UTC timezone via `dateTimeProvider` bean in `JpaConfig`
 
 ### Testing
-- Integration tests use `@SpringBootTest` with `@ActiveProfiles("test")`
-- **Testcontainers** used for PostgreSQL in test environment
+- Integration tests use `@SpringBootTest` with `@ActiveProfiles("test")` (H2)
+- `PostgresIntegrationTest` runs the `prod` profile against PostgreSQL via **Testcontainers**; it needs Docker and is skipped when Docker is not running
+- `SecurityRulesTest` checks the production security rules for every role
 - UTC timestamps for consistent auditing across all environments
 
 ### Security
@@ -137,6 +138,7 @@ com.nextstep.rentacar/
 > have built-in development secrets.
 
 - JWT tokens with configurable expiration
+- `ADMIN_PASSWORD` (optional): if set, the seeded `admin` user's password is set from it at startup. Use it to get a working admin in prod; remove it afterwards if the admin should be able to change the password
 - Password encoding with BCrypt
 - CORS configured for local development
 - Method-level security enabled with `@EnableMethodSecurity`
@@ -146,6 +148,8 @@ com.nextstep.rentacar/
 Initial data is created via Flyway migration `V2__seed_roles_and_admin.sql`:
 - **Admin user**: `admin`/`admin123`
 - **Employee user**: `john.doe`/`admin123`
+
+These passwords work only in the `local` and `dev` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
 - Sample branches, cars, customers, and reservations
 
 ## MapStruct Integration
@@ -157,7 +161,7 @@ The project uses MapStruct for DTO-Entity mapping with Spring component model:
 
 ## Important Implementation Details
 
-1. **Car Soft Delete**: Cars use `deleted` boolean flag with `@Where` clause
+1. **Car Soft Delete**: Cars use `deleted` boolean flag with `@SQLRestriction`
 2. **Reservation Overlaps**: Prevented in service layer with date range queries
 3. **JWT Configuration**: Separate properties for different environments
 4. **Validation**: Bean validation annotations on DTOs and entities
@@ -165,7 +169,7 @@ The project uses MapStruct for DTO-Entity mapping with Spring component model:
 
 ## Testing Strategy
 
-- **Integration Tests**: Full Spring context with real database (Testcontainers)
+- **Integration Tests**: Full Spring context with H2; PostgreSQL via Testcontainers in `PostgresIntegrationTest`
 - **Service Layer Focus**: Core business logic testing
 - **Entity Manager Clearing**: Tests simulate transaction boundaries
 - **Date-based Logic**: Reservation availability and overlap scenarios

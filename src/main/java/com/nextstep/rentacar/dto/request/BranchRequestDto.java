@@ -37,5 +37,6 @@ public class BranchRequestDto {
     @Size(max = 500, message = "Opening hours should not exceed 500 characters")
     private String openingHours;
 
-    private boolean active = true;
+    /** Optional: a new branch is active by default, an update without it leaves the status unchanged */
+    private Boolean active;
 }

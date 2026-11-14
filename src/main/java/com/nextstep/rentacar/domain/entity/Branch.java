@@ -41,6 +41,10 @@ public class Branch extends BaseEntity {
     @Column(name = "opening_hours", columnDefinition = "TEXT")
     private String openingHours;
 
+    /** Inactive branches are closed: their cars aren't offered and they can't be a pick-up or return location. */
+    @Column(name = "active", nullable = false)
+    private boolean active = true;
+
     @OneToMany(mappedBy = "branch", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Car> cars = new ArrayList<>();
 

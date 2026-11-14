@@ -129,6 +129,13 @@ com.nextstep.rentacar/
 - UTC timestamps for consistent auditing across all environments
 
 ### Security
+
+> **Before you push and deploy:** wherever this backend runs, set a strong random `JWT_SECRET`
+> (at least 32 characters) and deploy the latest version. Without it, the app won't start.
+>
+> Generate one with e.g. `openssl rand -base64 48`. Only the `local`, `dev` and `test` profiles
+> have built-in development secrets.
+
 - JWT tokens with configurable expiration
 - Password encoding with BCrypt
 - CORS configured for local development

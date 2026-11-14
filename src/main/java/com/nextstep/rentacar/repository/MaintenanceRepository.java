@@ -87,8 +87,8 @@ public interface MaintenanceRepository extends JpaRepository<Maintenance, Long> 
         AND (:status IS NULL OR m.status = :status)
         AND (:maintenanceType IS NULL OR m.maintenanceType = :maintenanceType)
         AND (:branchId IS NULL OR m.car.branch.id = :branchId)
-        AND (:startDate IS NULL OR m.scheduledDate >= :startDate)
-        AND (:endDate IS NULL OR m.scheduledDate <= :endDate)
+        AND (CAST(:startDate AS LocalDate) IS NULL OR m.scheduledDate >= :startDate)
+        AND (CAST(:endDate AS LocalDate) IS NULL OR m.scheduledDate <= :endDate)
         ORDER BY m.scheduledDate DESC
         """)
     Page<Maintenance> findWithFilters(@Param("carId") Long carId,

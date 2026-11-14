@@ -75,7 +75,7 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7");
     }
 
     @Test
@@ -93,6 +93,27 @@ class PostgresIntegrationTest {
 
         assertThatThrownBy(() -> jdbcTemplate.update(
                 "UPDATE reservations SET end_date = start_date - 1 WHERE id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("Reservation status check allows ACTIVE, not unknown statuses (V7)")
+    void reservationStatusCheck() {
+        Long id = jdbcTemplate.queryForObject("SELECT MIN(id) FROM reservations", Long.class);
+
+        jdbcTemplate.update("UPDATE reservations SET status = 'ACTIVE', mileage_out = 100, picked_up_at = CURRENT_TIMESTAMP WHERE id = ?", id);
+
+        assertThatThrownBy(() -> jdbcTemplate.update("UPDATE reservations SET status = 'BOGUS' WHERE id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @Test
+    @DisplayName("Return odometer cannot be below the pick-up odometer (V7)")
+    void reservationMileageCheck() {
+        Long id = jdbcTemplate.queryForObject("SELECT MIN(id) FROM reservations", Long.class);
+        jdbcTemplate.update("UPDATE reservations SET mileage_out = 100 WHERE id = ?", id);
+
+        assertThatThrownBy(() -> jdbcTemplate.update("UPDATE reservations SET mileage_in = 99 WHERE id = ?", id))
                 .isInstanceOf(DataIntegrityViolationException.class);
     }
 

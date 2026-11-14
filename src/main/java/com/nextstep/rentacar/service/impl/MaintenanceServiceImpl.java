@@ -83,9 +83,12 @@ public class MaintenanceServiceImpl implements MaintenanceService {
     @Override
     public MaintenanceResponseDto start(Long maintenanceId) {
         Maintenance maintenance = findMaintenance(maintenanceId);
+        Car car = maintenance.getCar();
+        if (car.getStatus() == CarStatus.RENTED) {
+            throw new IllegalStateException("Car is out on rental; start the job after it has been returned");
+        }
         maintenance.start();
         // Set car status to MAINTENANCE
-        Car car = maintenance.getCar();
         car.setStatus(CarStatus.MAINTENANCE);
         carRepository.save(car);
         return maintenanceMapper.toResponseDto(maintenanceRepository.save(maintenance));

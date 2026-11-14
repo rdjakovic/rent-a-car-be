@@ -1,7 +1,9 @@
 package com.nextstep.rentacar.web.controller;
 
 import com.nextstep.rentacar.domain.enums.ReservationStatus;
+import com.nextstep.rentacar.dto.request.ReservationPickupRequestDto;
 import com.nextstep.rentacar.dto.request.ReservationRequestDto;
+import com.nextstep.rentacar.dto.request.ReservationReturnRequestDto;
 import com.nextstep.rentacar.dto.response.ReservationResponseDto;
 import com.nextstep.rentacar.service.ReservationService;
 import jakarta.validation.Valid;
@@ -176,13 +178,28 @@ public class ReservationController {
     }
 
     @PostMapping("/{id}/complete")
-    @Operation(summary = "Complete a reservation")
+    @Operation(summary = "Return the car",
+            description = "Completes an ACTIVE rental (also after its end date): the car becomes AVAILABLE at the drop-off branch. Optionally records the odometer, which updates the car's mileage.")
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Completed", content = @Content(schema = @Schema(implementation = ReservationResponseDto.class))),
             @ApiResponse(responseCode = "409", description = "Conflict", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
-    public ResponseEntity<ReservationResponseDto> complete(@PathVariable Long id) {
-        reservationService.complete(id);
+    public ResponseEntity<ReservationResponseDto> complete(@PathVariable Long id,
+                                                           @Valid @RequestBody(required = false) ReservationReturnRequestDto details) {
+        reservationService.complete(id, details);
+        return ResponseEntity.ok(reservationService.getById(id));
+    }
+
+    @PostMapping("/{id}/pickup")
+    @Operation(summary = "Pick up the car",
+            description = "Hands the car over for a CONFIRMED reservation between its start and end date: the reservation becomes ACTIVE and the car RENTED. Optionally records the odometer.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Picked up", content = @Content(schema = @Schema(implementation = ReservationResponseDto.class))),
+            @ApiResponse(responseCode = "409", description = "Not CONFIRMED, outside the rental dates, or the car is not available", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
+    })
+    public ResponseEntity<ReservationResponseDto> pickUp(@PathVariable Long id,
+                                                         @Valid @RequestBody(required = false) ReservationPickupRequestDto details) {
+        reservationService.pickUp(id, details);
         return ResponseEntity.ok(reservationService.getById(id));
     }
 

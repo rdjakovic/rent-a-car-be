@@ -21,6 +21,10 @@ public class ReservationResponseDto {
     private BigDecimal totalPrice;
     private String currency;
     private String notes;
+    private Integer mileageOut;
+    private Integer mileageIn;
+    private OffsetDateTime pickedUpAt;
+    private OffsetDateTime returnedAt;
     private CustomerResponseDto customer;
     private CarListResponseDto car;
     private BranchResponseDto pickupBranch;

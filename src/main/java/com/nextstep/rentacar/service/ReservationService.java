@@ -1,7 +1,9 @@
 package com.nextstep.rentacar.service;
 
 import com.nextstep.rentacar.domain.enums.ReservationStatus;
+import com.nextstep.rentacar.dto.request.ReservationPickupRequestDto;
 import com.nextstep.rentacar.dto.request.ReservationRequestDto;
+import com.nextstep.rentacar.dto.request.ReservationReturnRequestDto;
 import com.nextstep.rentacar.dto.response.ReservationResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,7 +22,11 @@ public interface ReservationService {
 
     void confirm(Long id);
 
-    void complete(Long id);
+    /** Hand the car over: CONFIRMED -> ACTIVE, the car becomes RENTED. @param details optional; may be null */
+    void pickUp(Long id, ReservationPickupRequestDto details);
+
+    /** Car returned: ACTIVE -> COMPLETED, the car becomes AVAILABLE at the drop-off branch. @param details optional; may be null */
+    void complete(Long id, ReservationReturnRequestDto details);
 
     Page<ReservationResponseDto> listByCustomer(Long customerId, Pageable pageable);
 

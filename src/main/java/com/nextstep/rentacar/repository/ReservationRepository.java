@@ -30,14 +30,17 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
 
     /**
      * Check for overlapping reservations - critical for preventing double booking.
+     * A rental that is out past its end date (ACTIVE, not returned yet) still holds the car,
+     * so it also overlaps a range that starts today or earlier.
      * Uses pessimistic locking for consistency.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
         SELECT r FROM Reservation r 
         WHERE r.car.id = :carId 
-        AND r.status IN ('PENDING', 'CONFIRMED')
-        AND ((r.startDate <= :endDate) AND (r.endDate >= :startDate))
+        AND r.status IN ('PENDING', 'CONFIRMED', 'ACTIVE')
+        AND r.startDate <= :endDate
+        AND (r.endDate >= :startDate OR (r.status = 'ACTIVE' AND :startDate <= CURRENT_DATE))
         """)
     List<Reservation> findOverlappingReservations(@Param("carId") Long carId,
                                                  @Param("startDate") LocalDate startDate,
@@ -64,15 +67,15 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                                  Pageable pageable);
 
     /**
-     * Find active reservations (PENDING or CONFIRMED).
+     * Find open reservations (PENDING, CONFIRMED or ACTIVE).
      */
-    @Query("SELECT r FROM Reservation r WHERE r.status IN ('PENDING', 'CONFIRMED')")
+    @Query("SELECT r FROM Reservation r WHERE r.status IN ('PENDING', 'CONFIRMED', 'ACTIVE')")
     List<Reservation> findActiveReservations();
 
     /**
-     * Find reservations ending today (for completion).
+     * Find rentals due back on the given date (for returns).
      */
-    @Query("SELECT r FROM Reservation r WHERE r.endDate = :date AND r.status = 'CONFIRMED'")
+    @Query("SELECT r FROM Reservation r WHERE r.endDate = :date AND r.status = 'ACTIVE'")
     List<Reservation> findReservationsEndingOnDate(@Param("date") LocalDate date);
 
     /**

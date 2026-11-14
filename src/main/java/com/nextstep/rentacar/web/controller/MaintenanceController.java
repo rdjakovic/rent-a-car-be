@@ -2,10 +2,15 @@ package com.nextstep.rentacar.web.controller;
 
 import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.domain.enums.MaintenanceType;
+import com.nextstep.rentacar.dto.request.MaintenanceCompleteRequestDto;
 import com.nextstep.rentacar.dto.request.MaintenanceScheduleRequestDto;
+import com.nextstep.rentacar.dto.request.MaintenanceUpdateRequestDto;
+import com.nextstep.rentacar.dto.response.CarResponseDto;
 import com.nextstep.rentacar.dto.response.MaintenanceResponseDto;
 import com.nextstep.rentacar.service.MaintenanceService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -40,8 +45,20 @@ public class MaintenanceController {
             @ApiResponse(responseCode = "400", description = "Validation/Bad Request", content = @Content(schema = @Schema(implementation = org.springframework.http.ProblemDetail.class)))
     })
     public ResponseEntity<MaintenanceResponseDto> schedule(@Valid @RequestBody MaintenanceScheduleRequestDto request) {
-        MaintenanceResponseDto m = maintenanceService.schedule(request.getCarId(), request.getType(), request.getDescription(), request.getScheduledDate());
-        return ResponseEntity.ok(m);
+        return ResponseEntity.ok(maintenanceService.schedule(request));
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get a maintenance record")
+    public ResponseEntity<MaintenanceResponseDto> getById(@PathVariable Long id) {
+        return ResponseEntity.ok(maintenanceService.getById(id));
+    }
+
+    @PutMapping("/{id}")
+    @Operation(summary = "Edit a maintenance record that is still SCHEDULED")
+    public ResponseEntity<MaintenanceResponseDto> update(@PathVariable Long id,
+                                                         @Valid @RequestBody MaintenanceUpdateRequestDto request) {
+        return ResponseEntity.ok(maintenanceService.update(id, request));
     }
 
     @PostMapping("/{id}/start")
@@ -50,8 +67,10 @@ public class MaintenanceController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<MaintenanceResponseDto> complete(@PathVariable Long id) {
-        return ResponseEntity.ok(maintenanceService.complete(id));
+    @Operation(summary = "Complete a maintenance in progress, optionally recording cost, odometer, notes and the next service date")
+    public ResponseEntity<MaintenanceResponseDto> complete(@PathVariable Long id,
+                                                           @Valid @RequestBody(required = false) MaintenanceCompleteRequestDto details) {
+        return ResponseEntity.ok(maintenanceService.complete(id, details));
     }
 
     @PostMapping("/{id}/cancel")
@@ -71,6 +90,13 @@ public class MaintenanceController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
             @ParameterObject Pageable pageable) {
         return ResponseEntity.ok(maintenanceService.listByFilters(carId, employeeId, status, maintenanceType, branchId, startDate, endDate, pageable));
+    }
+
+    @GetMapping("/due-cars")
+    @Operation(summary = "Cars whose next service is due within the given days (or overdue) and that have no open maintenance")
+    public ResponseEntity<List<CarResponseDto>> carsDueForService(
+            @RequestParam(defaultValue = "14") @Min(0) @Max(365) int withinDays) {
+        return ResponseEntity.ok(maintenanceService.findCarsDueForService(withinDays));
     }
 
     @GetMapping("/scheduled")

@@ -25,6 +25,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,7 +75,7 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6");
     }
 
     @Test
@@ -124,6 +125,27 @@ class PostgresIntegrationTest {
         assertThat(carService.list(filter, PageRequest.of(0, 10)).getContent())
                 .isNotEmpty()
                 .allSatisfy(car -> assertThat(car.getDisplayName()).isEqualToIgnoringCase("2023 Toyota Camry"));
+    }
+
+    @Test
+    @DisplayName("Maintenance-aware availability and due-for-service queries run on PostgreSQL")
+    void maintenanceQueries() {
+        // V2 seeds a SCHEDULED job for car 1 (branch 1) 30 days from now
+        LocalDate serviceDay = LocalDate.now().plusDays(30);
+        Long carWithJob = jdbcTemplate.queryForObject(
+                "SELECT car_id FROM maintenance WHERE status = 'SCHEDULED' ORDER BY id LIMIT 1", Long.class);
+        Long branchId = carRepository.findById(carWithJob).orElseThrow().getBranch().getId();
+
+        assertThat(carRepository.findAvailableCarsWithFilters(branchId, serviceDay, serviceDay,
+                null, null, null, null, null, PageRequest.of(0, 50)).getContent())
+                .isNotEmpty()
+                .extracting(Car::getId).doesNotContain(carWithJob);
+
+        Car due = carRepository.findAll().stream().filter(c -> !c.getId().equals(carWithJob)).findFirst().orElseThrow();
+        due.setNextServiceDate(LocalDate.now().minusDays(1));
+        carRepository.saveAndFlush(due);
+        assertThat(carRepository.findCarsDueForServiceWithoutOpenMaintenance(LocalDate.now()))
+                .extracting(Car::getId).contains(due.getId());
     }
 
     @Test

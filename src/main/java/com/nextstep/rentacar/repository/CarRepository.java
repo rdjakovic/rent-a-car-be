@@ -36,6 +36,7 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
 
     /**
      * Find available cars for the given date range and branch.
+     * Cars with maintenance scheduled within the range are excluded; cars in the shop are not AVAILABLE.
      */
     @Query("""
         SELECT c FROM Car c 
@@ -47,13 +48,18 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
             WHERE r.status IN ('PENDING', 'CONFIRMED')
             AND ((r.startDate <= :endDate) AND (r.endDate >= :startDate))
         )
+        AND c.id NOT IN (
+            SELECT m.car.id FROM Maintenance m
+            WHERE m.status = 'SCHEDULED'
+            AND m.scheduledDate BETWEEN :startDate AND :endDate
+        )
         """)
     List<Car> findAvailableCars(@Param("branchId") Long branchId, 
                                @Param("startDate") LocalDate startDate, 
                                @Param("endDate") LocalDate endDate);
 
     /**
-     * Find available cars with filters.
+     * Find available cars with filters (same availability rules as {@link #findAvailableCars}).
      */
     @Query("""
         SELECT c FROM Car c 
@@ -69,6 +75,11 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
             SELECT r.car.id FROM Reservation r 
             WHERE r.status IN ('PENDING', 'CONFIRMED')
             AND ((r.startDate <= :endDate) AND (r.endDate >= :startDate))
+        )
+        AND c.id NOT IN (
+            SELECT m.car.id FROM Maintenance m
+            WHERE m.status = 'SCHEDULED'
+            AND m.scheduledDate BETWEEN :startDate AND :endDate
         )
         """)
     Page<Car> findAvailableCarsWithFilters(@Param("branchId") Long branchId,
@@ -86,6 +97,23 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
      */
     @Query("SELECT c FROM Car c WHERE c.nextServiceDate <= :date AND c.status != 'OUT_OF_SERVICE'")
     List<Car> findCarsNeedingService(@Param("date") LocalDate date);
+
+    /**
+     * Cars whose next service is due on or before the given date and that have no open maintenance job.
+     */
+    @Query("""
+        SELECT c FROM Car c
+        WHERE c.nextServiceDate IS NOT NULL
+        AND c.nextServiceDate <= :date
+        AND c.status <> 'OUT_OF_SERVICE'
+        AND NOT EXISTS (
+            SELECT m FROM Maintenance m
+            WHERE m.car = c
+            AND m.status IN ('SCHEDULED', 'IN_PROGRESS')
+        )
+        ORDER BY c.nextServiceDate ASC
+        """)
+    List<Car> findCarsDueForServiceWithoutOpenMaintenance(@Param("date") LocalDate date);
 
     boolean existsByVin(String vin);
 

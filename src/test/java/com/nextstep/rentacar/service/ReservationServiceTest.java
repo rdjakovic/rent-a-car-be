@@ -8,6 +8,7 @@ import com.nextstep.rentacar.mapper.ReservationMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.CustomerRepository;
+import com.nextstep.rentacar.repository.MaintenanceRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.impl.ReservationServiceImpl;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
@@ -51,6 +52,9 @@ class ReservationServiceTest {
 
     @Mock
     private BranchRepository branchRepository;
+
+    @Mock
+    private MaintenanceRepository maintenanceRepository;
 
     @Mock
     private ReservationMapper reservationMapper;

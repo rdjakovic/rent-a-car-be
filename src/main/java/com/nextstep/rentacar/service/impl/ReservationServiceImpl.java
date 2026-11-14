@@ -12,6 +12,7 @@ import com.nextstep.rentacar.mapper.ReservationMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.CustomerRepository;
+import com.nextstep.rentacar.repository.MaintenanceRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.ReservationService;
 import io.micrometer.core.instrument.MeterRegistry;
@@ -41,6 +42,7 @@ public class ReservationServiceImpl implements ReservationService {
     private final CustomerRepository customerRepository;
     private final CarRepository carRepository;
     private final BranchRepository branchRepository;
+    private final MaintenanceRepository maintenanceRepository;
     private final ReservationMapper reservationMapper;
     private final MeterRegistry meterRegistry;
 
@@ -229,6 +231,9 @@ public class ReservationServiceImpl implements ReservationService {
         boolean conflict = overlaps.stream().anyMatch(r -> excludeReservationId == null || !r.getId().equals(excludeReservationId));
         if (conflict) {
             throw new IllegalStateException("Car is not available for the selected dates");
+        }
+        if (!maintenanceRepository.findBlockingMaintenance(carId, start, end, LocalDate.now()).isEmpty()) {
+            throw new IllegalStateException("Car is in maintenance or scheduled for maintenance during the selected dates");
         }
     }
 

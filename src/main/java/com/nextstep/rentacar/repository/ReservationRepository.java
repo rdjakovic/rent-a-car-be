@@ -12,6 +12,7 @@ import org.springframework.stereotype.Repository;
 
 import jakarta.persistence.LockModeType;
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -65,6 +66,19 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
                                                  @Param("startDate") LocalDate startDate,
                                                  @Param("endDate") LocalDate endDate,
                                                  Pageable pageable);
+
+    /**
+     * Open reservations of the given cars that still matter: not ended yet, or out on rental past the end date.
+     * Ordered by start date, so the first one per car is its current or next booking.
+     */
+    @Query("""
+        SELECT r FROM Reservation r
+        WHERE r.car.id IN :carIds
+        AND r.status IN ('PENDING', 'CONFIRMED', 'ACTIVE')
+        AND (r.endDate >= :today OR r.status = 'ACTIVE')
+        ORDER BY r.startDate ASC, r.id ASC
+        """)
+    List<Reservation> findUpcomingForCars(@Param("carIds") Collection<Long> carIds, @Param("today") LocalDate today);
 
     /**
      * Find open reservations (PENDING, CONFIRMED or ACTIVE).

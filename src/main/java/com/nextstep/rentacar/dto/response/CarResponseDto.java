@@ -38,4 +38,7 @@ public class CarResponseDto {
     private BranchResponseDto branch;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
+
+    /** Current or next open booking; filled by the /cars list and details endpoints, null elsewhere */
+    private NextReservationDto nextReservation;
 }

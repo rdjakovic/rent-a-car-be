@@ -2,6 +2,7 @@ package com.nextstep.rentacar.service.impl;
 
 import com.nextstep.rentacar.domain.entity.Branch;
 import com.nextstep.rentacar.domain.entity.Car;
+import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.CarCategory;
 import com.nextstep.rentacar.domain.enums.FuelType;
 import com.nextstep.rentacar.domain.enums.TransmissionType;
@@ -9,9 +10,11 @@ import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.CarRequestDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
+import com.nextstep.rentacar.dto.response.NextReservationDto;
 import com.nextstep.rentacar.mapper.CarMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.repository.CarRepository;
+import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.CarService;
 import com.nextstep.rentacar.exception.DuplicateResourceException;
 import jakarta.persistence.EntityNotFoundException;
@@ -25,7 +28,9 @@ import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
@@ -41,6 +46,7 @@ public class CarServiceImpl implements CarService {
     private final CarRepository carRepository;
     private final BranchRepository branchRepository;
     private final CarMapper carMapper;
+    private final ReservationRepository reservationRepository;
 
     @Override
     public CarResponseDto create(CarRequestDto request) {
@@ -93,7 +99,9 @@ public class CarServiceImpl implements CarService {
     public CarResponseDto getById(Long id) {
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Car not found: " + id));
-        return carMapper.toResponseDto(car);
+        CarResponseDto dto = carMapper.toResponseDto(car);
+        dto.setNextReservation(nextReservations(List.of(id)).get(id));
+        return dto;
     }
 
     @Override
@@ -137,8 +145,24 @@ public class CarServiceImpl implements CarService {
     @Transactional(readOnly = true)
     public Page<CarListResponseDto> list(CarFilterDto filter, Pageable pageable) {
         Specification<Car> spec = buildCarSpecification(filter);
-        return carRepository.findAll(spec, pageable)
+        Page<CarListResponseDto> page = carRepository.findAll(spec, pageable)
                 .map(carMapper::toListResponseDto);
+        Map<Long, NextReservationDto> next = nextReservations(page.getContent().stream().map(CarListResponseDto::getId).toList());
+        page.getContent().forEach(car -> car.setNextReservation(next.get(car.getId())));
+        return page;
+    }
+
+    /** Current or next open booking per car, loaded with one query for all the given cars. */
+    private Map<Long, NextReservationDto> nextReservations(List<Long> carIds) {
+        Map<Long, NextReservationDto> next = new LinkedHashMap<>();
+        if (carIds.isEmpty()) {
+            return next;
+        }
+        for (Reservation r : reservationRepository.findUpcomingForCars(carIds, LocalDate.now())) {
+            next.putIfAbsent(r.getCar().getId(),
+                    new NextReservationDto(r.getId(), r.getStartDate(), r.getEndDate(), r.getStatus()));
+        }
+        return next;
     }
 
     private Specification<Car> buildCarSpecification(CarFilterDto filter) {

@@ -37,8 +37,9 @@ public class SecurityConfig {
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    /** Real security: every profile except the development ones served by {@link #localSecurityFilterChain}. */
     @Bean
-    @Profile("!local & !test")
+    @Profile("!local & !test & !docker")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -85,8 +86,12 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Development chain: everything is open except endpoints that need the caller's identity.
+     * 'docker' is local development with PostgreSQL, so it uses this chain too (the UI has no login yet).
+     */
     @Bean
-    @Profile({"local", "test"})
+    @Profile({"local", "test", "docker"})
     @Order(0)
     public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))

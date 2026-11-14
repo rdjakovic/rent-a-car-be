@@ -79,6 +79,10 @@ class SecurityRulesTest {
                 Arguments.of("POST", "/api/v1/reservations/999999/confirm", STAFF),
 
                 Arguments.of("GET", "/api/v1/maintenance", STAFF),
+                Arguments.of("GET", "/api/v1/maintenance/999999", STAFF),
+                Arguments.of("PUT", "/api/v1/maintenance/999999", STAFF),
+                Arguments.of("POST", "/api/v1/maintenance/999999/complete", STAFF),
+                Arguments.of("GET", "/api/v1/maintenance/due-cars", STAFF),
 
                 Arguments.of("GET", "/api/v1/settings", ALL),
                 Arguments.of("PUT", "/api/v1/settings", ADMIN)

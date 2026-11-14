@@ -50,6 +50,9 @@ public class Maintenance extends BaseEntity {
     @Column(name = "currency", length = 3)
     private String currency = "USD";
 
+    @Column(name = "odometer_reading")
+    private Integer odometerReading;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private MaintenanceStatus status = MaintenanceStatus.SCHEDULED;

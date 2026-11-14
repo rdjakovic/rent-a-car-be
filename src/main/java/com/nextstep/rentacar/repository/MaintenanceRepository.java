@@ -30,6 +30,21 @@ public interface MaintenanceRepository extends JpaRepository<Maintenance, Long> 
     List<Maintenance> findByCarIdAndStatus(Long carId, MaintenanceStatus status);
 
     /**
+     * Open jobs that keep the car from being rented in the given range: a job SCHEDULED on a date
+     * within it, or a job IN_PROGRESS (the car is in the shop) when the range starts today or earlier.
+     */
+    @Query("""
+        SELECT m FROM Maintenance m
+        WHERE m.car.id = :carId
+        AND ((m.status = 'SCHEDULED' AND m.scheduledDate BETWEEN :startDate AND :endDate)
+             OR (m.status = 'IN_PROGRESS' AND :startDate <= :today))
+        """)
+    List<Maintenance> findBlockingMaintenance(@Param("carId") Long carId,
+                                              @Param("startDate") LocalDate startDate,
+                                              @Param("endDate") LocalDate endDate,
+                                              @Param("today") LocalDate today);
+
+    /**
      * Find maintenance scheduled for a specific date.
      */
     @Query("SELECT m FROM Maintenance m WHERE m.scheduledDate = :date AND m.status = 'SCHEDULED'")

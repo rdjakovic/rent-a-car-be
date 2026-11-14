@@ -25,6 +25,7 @@ public class MaintenanceResponseDto {
     private LocalDate completedDate;
     private BigDecimal cost;
     private String currency;
+    private Integer odometerReading;
     private MaintenanceStatus status;
     private String notes;
     private OffsetDateTime createdAt;

@@ -75,7 +75,15 @@ public class Reservation extends BaseEntity {
     }
 
     public long getDurationInDays() {
-        return ChronoUnit.DAYS.between(startDate, endDate);
+        return rentalDays(startDate, endDate);
+    }
+
+    /**
+     * Number of charged rental days. A same-day rental (start == end) counts as 1 day;
+     * otherwise it's the number of days between pickup and return (14th to 16th = 2 days).
+     */
+    public static long rentalDays(LocalDate startDate, LocalDate endDate) {
+        return Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
     }
 
     public boolean isActive() {

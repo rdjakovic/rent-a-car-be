@@ -25,7 +25,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -67,10 +66,7 @@ public class ReservationServiceImpl implements ReservationService {
         reservation.setDropoffBranch(dropoff);
         reservation.setStatus(ReservationStatus.PENDING);
 
-        long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
-        if (days <= 0) {
-            throw new IllegalArgumentException("Reservation must be at least 1 day");
-        }
+        long days = Reservation.rentalDays(request.getStartDate(), request.getEndDate());
         BigDecimal totalPrice = car.getDailyPrice().multiply(BigDecimal.valueOf(days));
         reservation.setTotalPrice(totalPrice);
         reservation.setCurrency("USD");
@@ -117,10 +113,7 @@ public class ReservationServiceImpl implements ReservationService {
         // Ensure no overlaps (excluding this reservation)
         ensureCarAvailable(reservation.getCar().getId(), request.getStartDate(), request.getEndDate(), reservation.getId());
 
-        long days = ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate());
-        if (days <= 0) {
-            throw new IllegalArgumentException("Reservation must be at least 1 day");
-        }
+        long days = Reservation.rentalDays(request.getStartDate(), request.getEndDate());
         BigDecimal totalPrice = reservation.getCar().getDailyPrice().multiply(BigDecimal.valueOf(days));
         reservation.setTotalPrice(totalPrice);
 
@@ -226,8 +219,8 @@ public class ReservationServiceImpl implements ReservationService {
         if (start == null || end == null) {
             throw new IllegalArgumentException("Start and end dates are required");
         }
-        if (!end.isAfter(start)) {
-            throw new IllegalArgumentException("End date must be after start date");
+        if (end.isBefore(start)) {
+            throw new IllegalArgumentException("End date must be on or after start date");
         }
     }
 

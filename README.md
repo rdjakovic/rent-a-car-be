@@ -1,7 +1,5 @@
 # README.md
 
-This file provides guidance to WARP (warp.dev) when working with code in this repository.
-
 ## Project Overview
 
 This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 required to build and run), providing a comprehensive car rental management system with JWT authentication and role-based authorization.

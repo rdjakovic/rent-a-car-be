@@ -3,8 +3,10 @@ package com.nextstep.rentacar;
 import com.nextstep.rentacar.domain.entity.Car;
 import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.CarStatus;
+import com.nextstep.rentacar.domain.enums.MileageUnit;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
+import com.nextstep.rentacar.service.SettingsService;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,13 +60,22 @@ class PostgresIntegrationTest {
     @Autowired
     private ReservationRepository reservationRepository;
 
+    @Autowired
+    private SettingsService settingsService;
+
     @Test
     @DisplayName("All Flyway migrations apply successfully on PostgreSQL")
     void flywayMigrationsApplied() {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5");
+    }
+
+    @Test
+    @DisplayName("Settings are seeded with kilometers as the mileage unit (V5)")
+    void settingsSeeded() {
+        assertThat(settingsService.get().getMileageUnit()).isEqualTo(MileageUnit.KILOMETERS);
     }
 
     @Test

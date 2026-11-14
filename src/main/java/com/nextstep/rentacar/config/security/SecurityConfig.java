@@ -69,6 +69,10 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/cars/*/restore").hasRole("ADMIN")
                 .requestMatchers("/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
 
+                // Settings: everyone signed in can read them (pages need e.g. the mileage unit), only admins change them
+                .requestMatchers(HttpMethod.GET, "/api/v1/settings").authenticated()
+                .requestMatchers("/api/v1/settings/**").hasRole("ADMIN")
+
                 // Customer data, reservations and maintenance are staff-only
                 // (no ownership checks exist, so customers get no direct access)
                 .requestMatchers("/api/v1/customers/**", "/api/v1/reservations/**", "/api/v1/maintenance/**")

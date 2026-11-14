@@ -13,6 +13,8 @@ import java.time.LocalDate;
 @Getter
 @Setter
 public class CarFilterDto {
+    /** Free text: case-insensitive partial match on make, model or "year make model" */
+    private String search;
     private String vin;
     private String make;
     private String model;

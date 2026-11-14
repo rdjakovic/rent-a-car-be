@@ -27,6 +27,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.CriteriaQuery;
@@ -143,6 +144,16 @@ public class CarServiceImpl implements CarService {
     private Specification<Car> buildCarSpecification(CarFilterDto filter) {
         return (Root<Car> root, CriteriaQuery<?> query, CriteriaBuilder cb) -> {
             List<Predicate> predicates = new ArrayList<>();
+            if (filter.getSearch() != null && !filter.getSearch().isBlank()) {
+                String pattern = "%" + filter.getSearch().trim().toLowerCase() + "%";
+                // Display name as shown in the UI, e.g. "2023 Toyota Camry"
+                Expression<String> displayName = cb.concat(cb.concat(cb.concat(cb.concat(
+                        root.get("year").as(String.class), " "), root.get("make")), " "), root.get("model"));
+                predicates.add(cb.or(
+                        cb.like(cb.lower(root.get("make")), pattern),
+                        cb.like(cb.lower(root.get("model")), pattern),
+                        cb.like(cb.lower(displayName), pattern)));
+            }
             if (filter.getVin() != null && !filter.getVin().isEmpty()) {
                 predicates.add(cb.equal(root.get("vin"), filter.getVin()));
             }

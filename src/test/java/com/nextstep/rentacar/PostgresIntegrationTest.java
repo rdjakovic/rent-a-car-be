@@ -6,7 +6,9 @@ import com.nextstep.rentacar.domain.enums.CarStatus;
 import com.nextstep.rentacar.domain.enums.MileageUnit;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.ReservationRepository;
+import com.nextstep.rentacar.service.CarService;
 import com.nextstep.rentacar.service.SettingsService;
+import com.nextstep.rentacar.dto.request.CarFilterDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -63,6 +65,9 @@ class PostgresIntegrationTest {
     @Autowired
     private SettingsService settingsService;
 
+    @Autowired
+    private CarService carService;
+
     @Test
     @DisplayName("All Flyway migrations apply successfully on PostgreSQL")
     void flywayMigrationsApplied() {
@@ -108,6 +113,17 @@ class PostgresIntegrationTest {
 
         assertThat(results.getContent()).isNotEmpty()
                 .allSatisfy(r -> assertThat(r.getCustomer().getFirstName()).isEqualTo("Alice"));
+    }
+
+    @Test
+    @DisplayName("Car search (make, model, 'year make model') runs on PostgreSQL")
+    void carSearch() {
+        CarFilterDto filter = new CarFilterDto();
+        filter.setSearch("2023 TOYOTA cam");
+
+        assertThat(carService.list(filter, PageRequest.of(0, 10)).getContent())
+                .isNotEmpty()
+                .allSatisfy(car -> assertThat(car.getDisplayName()).isEqualToIgnoringCase("2023 Toyota Camry"));
     }
 
     @Test

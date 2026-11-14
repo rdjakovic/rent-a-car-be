@@ -91,6 +91,34 @@ class CarControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("GET /api/v1/cars?search= - filters by make, model or display name, case-insensitive")
+    @WithMockUser(roles = "ADMIN")
+    void listCars_shouldFilterBySearchTerm() throws Exception {
+        carService.create(aCar().withMake("Honda").withModel("Civic").withYear(2024).withBranchId(branchId).build());
+        carService.create(aCar().withMake("Honda").withModel("CR-V").withYear(2023).withBranchId(branchId).build());
+        carService.create(aCar().withMake("Toyota").withModel("Camry").withYear(2023).withBranchId(branchId).build());
+
+        mockMvc.perform(get("/api/v1/cars").param("search", "honda"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(2))
+                .andExpect(jsonPath("$.content[*].make", everyItem(is("Honda"))));
+
+        mockMvc.perform(get("/api/v1/cars").param("search", "CAMRY"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].model").value("Camry"));
+
+        mockMvc.perform(get("/api/v1/cars").param("search", "2023 hon"))
+                .andExpect(jsonPath("$.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].model").value("CR-V"));
+
+        mockMvc.perform(get("/api/v1/cars").param("search", "  "))
+                .andExpect(jsonPath("$.totalElements").value(3));
+
+        mockMvc.perform(get("/api/v1/cars").param("search", "honda").param("minSeats", "100"))
+                .andExpect(jsonPath("$.totalElements").value(0));
+    }
+
+    @Test
     @DisplayName("POST /api/v1/cars - should create new car")
     @WithMockUser(roles = "ADMIN")
     void createCar_shouldReturnCreatedCar() throws Exception {

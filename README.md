@@ -44,8 +44,9 @@ This is a **Rent-a-Car API** built with Spring Boot 4.1 and Java 25 (JDK 25 requ
 ### Database
 The Flyway Maven plugin targets the dev/docker PostgreSQL (`localhost:5432/rentacar`) by default.
 The database must be running, e.g. start the app once with the `docker` profile or run `docker compose up -d`.
+Migrations are read from the compiled classpath (V4 is a Java migration), so compile first if `target/` is empty: `./mvnw compile flyway:info`.
 For another database, pass `-Dflyway.url=... -Dflyway.user=... -Dflyway.password=...` and
-`-Dflyway.locations=filesystem:src/main/resources/db/migration` (never include `db/dev-data` outside local/dev).
+`-Dflyway.locations=classpath:db/migration` (never include `db/dev-data` outside local/dev).
 
 ```bash
 # Check database migrations

@@ -130,10 +130,27 @@ class ReservationServiceIntegrationTest {
         ReservationResponseDto updated = reservationService.update(created.getId(), update);
         assertThat(updated.getTotalPrice()).isEqualByComparingTo(new BigDecimal("497.50"));
 
-        // Invalid date range
-        ReservationRequestDto invalid = new ReservationRequestDto(customerId, carId, start, start, branchId, branchId, "Invalid");
+        // Invalid date range: return before pickup
+        ReservationRequestDto invalid = new ReservationRequestDto(customerId, carId, start, start.minusDays(1), branchId, branchId, "Invalid");
         assertThatThrownBy(() -> reservationService.update(created.getId(), invalid))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("End date must be after start date");
+                .hasMessageContaining("End date must be on or after start date");
+    }
+
+    @Test
+    @DisplayName("Same-day reservation is allowed and charged as one day")
+    void sameDayReservationIsOneDay() {
+        LocalDate day = LocalDate.now().plusDays(20);
+        ReservationRequestDto sameDay = new ReservationRequestDto(customerId, carId, day, day, branchId, branchId, "Same day");
+
+        ReservationResponseDto created = reservationService.create(sameDay);
+
+        assertThat(created.getDurationDays()).isEqualTo(1);
+        assertThat(created.getTotalPrice()).isEqualByComparingTo(new BigDecimal("99.50"));
+
+        // The same day is then taken for this car
+        ReservationRequestDto overlapping = new ReservationRequestDto(customerId, carId, day, day.plusDays(1), branchId, branchId, "Overlap");
+        assertThatThrownBy(() -> reservationService.create(overlapping))
+                .hasMessageContaining("not available");
     }
 }

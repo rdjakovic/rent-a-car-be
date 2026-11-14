@@ -185,8 +185,8 @@
 						<schema>public</schema>
 					</schemas>
 					<locations>
-						<location>filesystem:src/main/resources/db/migration</location>
-						<location>filesystem:src/main/resources/db/dev-data</location>
+						<location>classpath:db/migration</location>
+						<location>classpath:db/dev-data</location>
 					</locations>
 				</configuration>
 				<dependencies>

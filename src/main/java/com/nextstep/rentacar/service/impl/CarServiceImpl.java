@@ -124,8 +124,8 @@ public class CarServiceImpl implements CarService {
                                                   Integer minSeats,
                                                   BigDecimal maxPrice,
                                                   Pageable pageable) {
-        if (startDate == null || endDate == null || !endDate.isAfter(startDate)) {
-            throw new IllegalArgumentException("Invalid date range: endDate must be after startDate");
+        if (startDate == null || endDate == null || endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("Invalid date range: endDate must be on/after startDate");
         }
         return carRepository.findAvailableCarsWithFilters(branchId, startDate, endDate,
                 category, transmission, fuelType, minSeats, maxPrice, pageable)

@@ -9,7 +9,6 @@ import org.mapstruct.MappingTarget;
 import org.mapstruct.Named;
 
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 
 @Mapper(componentModel = "spring", uses = {CustomerMapper.class, CarMapper.class, BranchMapper.class})
 public interface ReservationMapper {
@@ -53,6 +52,6 @@ public interface ReservationMapper {
             return 0;
         }
         
-        return ChronoUnit.DAYS.between(startDate, endDate);
+        return Reservation.rentalDays(startDate, endDate);
     }
 }

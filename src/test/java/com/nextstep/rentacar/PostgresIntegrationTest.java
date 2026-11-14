@@ -9,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -23,6 +24,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Runs the application with the prod profile against a real PostgreSQL:
@@ -62,7 +64,19 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3");
+        assertThat(versions).containsExactly("1", "2", "3", "4");
+    }
+
+    @Test
+    @DisplayName("Reservation date check allows same-day rentals but not end before start (V4)")
+    void reservationDateCheck() {
+        Long id = jdbcTemplate.queryForObject("SELECT MIN(id) FROM reservations", Long.class);
+
+        jdbcTemplate.update("UPDATE reservations SET end_date = start_date WHERE id = ?", id);
+
+        assertThatThrownBy(() -> jdbcTemplate.update(
+                "UPDATE reservations SET end_date = start_date - 1 WHERE id = ?", id))
+                .isInstanceOf(DataIntegrityViolationException.class);
     }
 
     @Test

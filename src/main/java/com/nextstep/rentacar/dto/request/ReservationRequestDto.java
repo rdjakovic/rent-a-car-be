@@ -23,7 +23,7 @@ public class ReservationRequestDto {
     private LocalDate startDate;
 
     @NotNull(message = "End date is required")
-    @Future(message = "End date must be in the future")
+    @FutureOrPresent(message = "End date must be today or in the future")
     private LocalDate endDate;
 
     @NotNull(message = "Pickup branch ID is required")
@@ -35,11 +35,11 @@ public class ReservationRequestDto {
     @Size(max = 1000, message = "Notes should not exceed 1000 characters")
     private String notes;
 
-    @AssertTrue(message = "End date must be after start date")
-    public boolean isEndDateAfterStartDate() {
+    @AssertTrue(message = "End date must be on or after start date")
+    public boolean isEndDateOnOrAfterStartDate() {
         if (startDate == null || endDate == null) {
             return true; // Let @NotNull handle null validation
         }
-        return endDate.isAfter(startDate);
+        return !endDate.isBefore(startDate);
     }
 }

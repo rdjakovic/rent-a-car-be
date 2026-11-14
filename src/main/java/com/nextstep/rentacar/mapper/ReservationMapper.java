@@ -28,6 +28,10 @@ public interface ReservationMapper {
     @Mapping(target = "totalPrice", ignore = true)
     @Mapping(target = "currency", ignore = true)
     @Mapping(target = "payments", ignore = true)
+    @Mapping(target = "mileageOut", ignore = true)
+    @Mapping(target = "mileageIn", ignore = true)
+    @Mapping(target = "pickedUpAt", ignore = true)
+    @Mapping(target = "returnedAt", ignore = true)
     Reservation toEntity(ReservationRequestDto reservationRequestDto);
 
     @Mapping(target = "id", ignore = true)
@@ -41,6 +45,10 @@ public interface ReservationMapper {
     @Mapping(target = "totalPrice", ignore = true)
     @Mapping(target = "currency", ignore = true)
     @Mapping(target = "payments", ignore = true)
+    @Mapping(target = "mileageOut", ignore = true)
+    @Mapping(target = "mileageIn", ignore = true)
+    @Mapping(target = "pickedUpAt", ignore = true)
+    @Mapping(target = "returnedAt", ignore = true)
     void updateEntityFromDto(ReservationRequestDto reservationRequestDto, @MappingTarget Reservation reservation);
 
     @Named("calculateDurationDays")

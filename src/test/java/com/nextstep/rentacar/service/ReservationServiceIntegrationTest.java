@@ -99,20 +99,19 @@ class ReservationServiceIntegrationTest {
                 .isInstanceOf(IllegalStateException.class)
                 .hasMessageContaining("not available");
 
-        // Confirm then complete
+        // Confirm; it can't be completed before the car has been picked up (see RentalLifecycleIntegrationTest)
         reservationService.confirm(created.getId());
         ReservationResponseDto afterConfirm = reservationService.getById(created.getId());
         assertThat(afterConfirm.getStatus()).isEqualTo(ReservationStatus.CONFIRMED);
 
-        reservationService.complete(created.getId());
-        ReservationResponseDto afterComplete = reservationService.getById(created.getId());
-        assertThat(afterComplete.getStatus()).isEqualTo(ReservationStatus.COMPLETED);
+        assertThatThrownBy(() -> reservationService.complete(created.getId(), null))
+                .isInstanceOf(IllegalStateException.class);
 
         // List methods
         Page<ReservationResponseDto> byCar = reservationService.listByCar(carId, PageRequest.of(0, 5));
         assertThat(byCar.getTotalElements()).isGreaterThanOrEqualTo(1);
 
-        Page<ReservationResponseDto> byFilters = reservationService.listWithFilters(customerId, carId, ReservationStatus.COMPLETED, branchId, start, end.plusDays(10), PageRequest.of(0, 5));
+        Page<ReservationResponseDto> byFilters = reservationService.listWithFilters(customerId, carId, ReservationStatus.CONFIRMED, branchId, start, end.plusDays(10), PageRequest.of(0, 5));
         assertThat(byFilters.getTotalElements()).isGreaterThanOrEqualTo(1);
     }
 

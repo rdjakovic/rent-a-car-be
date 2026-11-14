@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,6 +61,20 @@ public class Reservation extends BaseEntity {
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
 
+    /** Odometer when the car was handed over (fleet mileage unit) */
+    @Column(name = "mileage_out")
+    private Integer mileageOut;
+
+    /** Odometer when the car came back */
+    @Column(name = "mileage_in")
+    private Integer mileageIn;
+
+    @Column(name = "picked_up_at")
+    private OffsetDateTime pickedUpAt;
+
+    @Column(name = "returned_at")
+    private OffsetDateTime returnedAt;
+
     @OneToMany(mappedBy = "reservation", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Payment> payments = new ArrayList<>();
 
@@ -86,10 +101,6 @@ public class Reservation extends BaseEntity {
         return Math.max(1, ChronoUnit.DAYS.between(startDate, endDate));
     }
 
-    public boolean isActive() {
-        return status == ReservationStatus.PENDING || status == ReservationStatus.CONFIRMED;
-    }
-
     public boolean canBeCancelled() {
         return status == ReservationStatus.PENDING || status == ReservationStatus.CONFIRMED;
     }
@@ -98,8 +109,24 @@ public class Reservation extends BaseEntity {
         return status == ReservationStatus.PENDING;
     }
 
+    /** A confirmed reservation can be picked up on any day from its start date to its end date. */
+    public boolean canBePickedUp(LocalDate today) {
+        return status == ReservationStatus.CONFIRMED && !today.isBefore(startDate) && !today.isAfter(endDate);
+    }
+
+    /** Completing is returning the car, also when it comes back after the end date. */
     public boolean canBeCompleted() {
-        return status == ReservationStatus.CONFIRMED && !endDate.isBefore(LocalDate.now());
+        return status == ReservationStatus.ACTIVE;
+    }
+
+    public void pickUp(Integer mileageOut) {
+        if (!canBePickedUp(LocalDate.now())) {
+            throw new IllegalStateException("Reservation can only be picked up when CONFIRMED and between its start and end date"
+                    + " (status: " + status + ", dates: " + startDate + " to " + endDate + ")");
+        }
+        this.status = ReservationStatus.ACTIVE;
+        this.pickedUpAt = OffsetDateTime.now();
+        this.mileageOut = mileageOut;
     }
 
     public void confirm() {
@@ -117,9 +144,16 @@ public class Reservation extends BaseEntity {
     }
 
     public void complete() {
+        complete(null);
+    }
+
+    /** The car is back: records the return time and odometer (optional). */
+    public void complete(Integer mileageIn) {
         if (!canBeCompleted()) {
             throw new IllegalStateException("Reservation cannot be completed in current status: " + status);
         }
         this.status = ReservationStatus.COMPLETED;
+        this.returnedAt = OffsetDateTime.now();
+        this.mileageIn = mileageIn;
     }
 }

@@ -6,6 +6,8 @@ package com.nextstep.rentacar.domain.enums;
 public enum ReservationStatus {
     PENDING,
     CONFIRMED,
+    /** The customer has picked the car up; it is out on rental until returned. */
+    ACTIVE,
     CANCELLED,
     COMPLETED
 }

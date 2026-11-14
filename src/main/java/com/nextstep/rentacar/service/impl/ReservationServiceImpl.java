@@ -5,7 +5,10 @@ import com.nextstep.rentacar.domain.entity.Car;
 import com.nextstep.rentacar.domain.entity.Customer;
 import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.ReservationStatus;
+import com.nextstep.rentacar.domain.enums.CarStatus;
+import com.nextstep.rentacar.dto.request.ReservationPickupRequestDto;
 import com.nextstep.rentacar.dto.request.ReservationRequestDto;
+import com.nextstep.rentacar.dto.request.ReservationReturnRequestDto;
 import com.nextstep.rentacar.dto.response.ReservationResponseDto;
 import com.nextstep.rentacar.exception.SearchValidationException;
 import com.nextstep.rentacar.mapper.ReservationMapper;
@@ -148,11 +151,56 @@ public class ReservationServiceImpl implements ReservationService {
     }
 
     @Override
-    public void complete(Long id) {
+    public void pickUp(Long id, ReservationPickupRequestDto details) {
         Reservation reservation = reservationRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Reservation not found: " + id));
-        reservation.complete();
+        Car car = reservation.getCar();
+        if (car.getStatus() != CarStatus.AVAILABLE) {
+            throw new IllegalStateException("Car cannot be handed over, its status is " + car.getStatus());
+        }
+        Integer mileageOut = details != null ? details.getMileageOut() : null;
+        ensureOdometerNotBelowMileage(car, mileageOut);
+
+        reservation.pickUp(mileageOut);
+        if (mileageOut != null) {
+            car.setMileage(mileageOut);
+        }
+        car.setStatus(CarStatus.RENTED);
+        carRepository.save(car);
         reservationRepository.save(reservation);
+    }
+
+    @Override
+    public void complete(Long id, ReservationReturnRequestDto details) {
+        Reservation reservation = reservationRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Reservation not found: " + id));
+        Integer mileageIn = details != null ? details.getMileageIn() : null;
+        if (mileageIn != null && reservation.getMileageOut() != null && mileageIn < reservation.getMileageOut()) {
+            throw new IllegalArgumentException("Return odometer " + mileageIn
+                    + " is lower than the odometer at pick-up " + reservation.getMileageOut());
+        }
+        Car car = reservation.getCar();
+        ensureOdometerNotBelowMileage(car, mileageIn);
+
+        reservation.complete(mileageIn);
+        if (mileageIn != null) {
+            car.setMileage(mileageIn);
+        }
+        // The car is back where the customer dropped it off (one-way rentals move it)
+        car.setBranch(reservation.getDropoffBranch());
+        if (Boolean.FALSE.equals(car.getDeleted())) {
+            car.setStatus(CarStatus.AVAILABLE);
+        }
+        carRepository.save(car);
+        reservationRepository.save(reservation);
+    }
+
+    /** An odometer reading becomes the car's mileage, so it cannot go backwards. */
+    private void ensureOdometerNotBelowMileage(Car car, Integer odometer) {
+        if (odometer != null && odometer < car.getMileage()) {
+            throw new IllegalArgumentException("Odometer reading " + odometer
+                    + " is lower than the car's recorded mileage " + car.getMileage());
+        }
     }
 
     @Override

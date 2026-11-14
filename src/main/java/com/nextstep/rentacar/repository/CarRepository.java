@@ -45,7 +45,7 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
         AND c.deleted = false
         AND c.id NOT IN (
             SELECT r.car.id FROM Reservation r 
-            WHERE r.status IN ('PENDING', 'CONFIRMED')
+            WHERE r.status IN ('PENDING', 'CONFIRMED', 'ACTIVE')
             AND ((r.startDate <= :endDate) AND (r.endDate >= :startDate))
         )
         AND c.id NOT IN (
@@ -73,7 +73,7 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
         AND (:maxPrice IS NULL OR c.dailyPrice <= :maxPrice)
         AND c.id NOT IN (
             SELECT r.car.id FROM Reservation r 
-            WHERE r.status IN ('PENDING', 'CONFIRMED')
+            WHERE r.status IN ('PENDING', 'CONFIRMED', 'ACTIVE')
             AND ((r.startDate <= :endDate) AND (r.endDate >= :startDate))
         )
         AND c.id NOT IN (

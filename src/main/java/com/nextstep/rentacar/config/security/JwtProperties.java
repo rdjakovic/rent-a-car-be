@@ -1,20 +1,27 @@
 package com.nextstep.rentacar.config.security;
 
 import lombok.Data;
+import lombok.ToString;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
+import org.springframework.util.StringUtils;
 
 import java.time.Duration;
 
 @Data
 @Component
 @ConfigurationProperties(prefix = "app.jwt")
-public class JwtProperties {
+public class JwtProperties implements InitializingBean {
+
+    static final int MIN_SECRET_LENGTH = 32;
 
     /**
-     * JWT secret key for HMAC signing
+     * JWT secret key for HMAC signing (set via JWT_SECRET). No default: the app must not
+     * start with a well-known key. HS256 needs at least 256 bits.
      */
-    private String secret = "mySecretKey12345678901234567890123456789012345678901234567890";
+    @ToString.Exclude
+    private String secret;
 
     /**
      * JWT token expiration duration
@@ -35,4 +42,19 @@ public class JwtProperties {
      * Algorithm used for signing
      */
     private String algorithm = "HS256";
+
+    /**
+     * Validated here instead of with bean-validation annotations: Spring Boot's startup failure
+     * report prints the rejected property value, which would leak the secret into the logs.
+     */
+    @Override
+    public void afterPropertiesSet() {
+        if (!StringUtils.hasText(secret)) {
+            throw new IllegalStateException("app.jwt.secret must be set (JWT_SECRET)");
+        }
+        if (secret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException("app.jwt.secret must be at least " + MIN_SECRET_LENGTH
+                    + " characters (256 bits) for HS256, but has " + secret.length());
+        }
+    }
 }

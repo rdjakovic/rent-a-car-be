@@ -1,0 +1,6 @@
+# 'docker' profile: dev settings (via the profile group in application.yml) with PostgreSQL
+# started from compose.yaml when the app starts. Requires Docker Desktop to be running.
+spring:
+  docker:
+    compose:
+      enabled: true

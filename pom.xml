@@ -75,6 +75,12 @@
 			<scope>runtime</scope>
 		</dependency>
 		<dependency>
+			<!-- Starts PostgreSQL from compose.yaml for the 'docker' profile; not packaged into the jar -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-docker-compose</artifactId>
+			<optional>true</optional>
+		</dependency>
+		<dependency>
 			<!-- H2 web console (local profile); a separate module since Boot 4 -->
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-h2console</artifactId>

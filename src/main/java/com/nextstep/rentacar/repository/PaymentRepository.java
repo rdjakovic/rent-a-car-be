@@ -70,8 +70,8 @@ public interface PaymentRepository extends JpaRepository<Payment, Long> {
         AND (:customerId IS NULL OR p.reservation.customer.id = :customerId)
         AND (:minAmount IS NULL OR p.amount >= :minAmount)
         AND (:maxAmount IS NULL OR p.amount <= :maxAmount)
-        AND (:startDate IS NULL OR p.paymentDate >= :startDate)
-        AND (:endDate IS NULL OR p.paymentDate <= :endDate)
+        AND (CAST(:startDate AS OffsetDateTime) IS NULL OR p.paymentDate >= :startDate)
+        AND (CAST(:endDate AS OffsetDateTime) IS NULL OR p.paymentDate <= :endDate)
         ORDER BY p.paymentDate DESC
         """)
     Page<Payment> findWithFilters(@Param("reservationId") Long reservationId,

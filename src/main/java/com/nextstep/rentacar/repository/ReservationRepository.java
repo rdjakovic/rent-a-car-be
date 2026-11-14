@@ -99,8 +99,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         AND (:carId IS NULL OR r.car.id = :carId)
         AND (:status IS NULL OR r.status = :status)
         AND (:branchId IS NULL OR r.pickupBranch.id = :branchId OR r.dropoffBranch.id = :branchId)
-        AND (:startDate IS NULL OR r.startDate >= :startDate)
-        AND (:endDate IS NULL OR r.endDate <= :endDate)
+        AND (CAST(:startDate AS LocalDate) IS NULL OR r.startDate >= :startDate)
+        AND (CAST(:endDate AS LocalDate) IS NULL OR r.endDate <= :endDate)
         ORDER BY r.id DESC
         """)
     Page<Reservation> findWithFilters(@Param("customerId") Long customerId,
@@ -155,8 +155,8 @@ public interface ReservationRepository extends JpaRepository<Reservation, Long> 
         AND (:carId IS NULL OR r.car.id = :carId)
         AND (:status IS NULL OR r.status = :status)
         AND (:branchId IS NULL OR r.pickupBranch.id = :branchId OR r.dropoffBranch.id = :branchId)
-        AND (:startDate IS NULL OR r.endDate >= :startDate)
-        AND (:endDate IS NULL OR r.startDate <= :endDate)
+        AND (CAST(:startDate AS LocalDate) IS NULL OR r.endDate >= :startDate)
+        AND (CAST(:endDate AS LocalDate) IS NULL OR r.startDate <= :endDate)
         AND (
             :search IS NULL OR :search = '' OR
             LOWER(CONCAT(c.firstName, ' ', c.lastName)) LIKE LOWER(CONCAT('%', :search, '%')) OR

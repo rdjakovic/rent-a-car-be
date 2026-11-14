@@ -4,7 +4,11 @@ import com.nextstep.rentacar.domain.entity.Car;
 import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.CarStatus;
 import com.nextstep.rentacar.domain.enums.MileageUnit;
+import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.repository.CarRepository;
+import com.nextstep.rentacar.repository.MaintenanceRepository;
+import com.nextstep.rentacar.repository.PaymentRepository;
+import com.nextstep.rentacar.service.ReservationService;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.CarService;
 import com.nextstep.rentacar.service.SettingsService;
@@ -26,6 +30,7 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
 import java.time.LocalDate;
+import java.time.OffsetDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -62,6 +67,15 @@ class PostgresIntegrationTest {
 
     @Autowired
     private ReservationRepository reservationRepository;
+
+    @Autowired
+    private MaintenanceRepository maintenanceRepository;
+
+    @Autowired
+    private PaymentRepository paymentRepository;
+
+    @Autowired
+    private ReservationService reservationService;
 
     @Autowired
     private SettingsService settingsService;
@@ -167,6 +181,43 @@ class PostgresIntegrationTest {
         carRepository.saveAndFlush(due);
         assertThat(carRepository.findCarsDueForServiceWithoutOpenMaintenance(LocalDate.now()))
                 .extracting(Car::getId).contains(due.getId());
+    }
+
+    @Test
+    @DisplayName("Maintenance list date filters run on PostgreSQL (one date, both dates, none)")
+    void maintenanceDateFilters() {
+        LocalDate today = LocalDate.now();
+        PageRequest page = PageRequest.of(0, 10);
+
+        assertThat(maintenanceRepository.findWithFilters(null, null, MaintenanceStatus.SCHEDULED, null, null,
+                null, today.minusDays(1), page)).isNotNull();
+        assertThat(maintenanceRepository.findWithFilters(null, null, MaintenanceStatus.SCHEDULED, null, null,
+                today, today.plusDays(60), page).getContent()).isNotEmpty();
+        assertThat(maintenanceRepository.findWithFilters(null, null, null, null, null,
+                today, null, page).getContent()).isNotEmpty();
+        assertThat(maintenanceRepository.findWithFilters(null, null, null, null, null,
+                null, null, page).getContent()).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Reservation list date filters run on PostgreSQL (with and without search)")
+    void reservationDateFilters() {
+        LocalDate today = LocalDate.now();
+        PageRequest page = PageRequest.of(0, 10);
+
+        assertThat(reservationRepository.findWithFilters(null, null, null, null, today, null, page).getContent()).isNotEmpty();
+        assertThat(reservationRepository.findWithFilters(null, null, null, null, null, today.plusDays(60), page).getContent()).isNotEmpty();
+        assertThat(reservationRepository.findWithFiltersAndSearch(null, null, null, null, today, today.plusDays(60), null, page)
+                .getContent()).isNotEmpty();
+        assertThat(reservationService.listWithFilters(null, null, null, null, today, today.plusDays(60), "alice", page)
+                .getContent()).isNotEmpty();
+    }
+
+    @Test
+    @DisplayName("Payment list date filters run on PostgreSQL")
+    void paymentDateFilters() {
+        assertThat(paymentRepository.findWithFilters(null, null, null, null, null, null,
+                OffsetDateTime.now().minusDays(1), OffsetDateTime.now().plusDays(1), PageRequest.of(0, 10)).getContent()).isNotEmpty();
     }
 
     @Test

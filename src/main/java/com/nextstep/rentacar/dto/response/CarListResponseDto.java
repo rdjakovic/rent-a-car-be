@@ -32,4 +32,7 @@ public class CarListResponseDto {
     private String color;
     private String displayName;
     private String branchName;
+
+    /** Current or next open booking; filled by the /cars list and details endpoints, null elsewhere */
+    private NextReservationDto nextReservation;
 }

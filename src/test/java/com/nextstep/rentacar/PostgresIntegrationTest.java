@@ -221,6 +221,17 @@ class PostgresIntegrationTest {
     }
 
     @Test
+    @DisplayName("Next-booking query for the car list runs on PostgreSQL")
+    void upcomingReservationsForCars() {
+        List<Long> carIds = carRepository.findAll().stream().map(Car::getId).toList();
+
+        assertThat(reservationRepository.findUpcomingForCars(carIds, LocalDate.now())).isNotEmpty()
+                .allSatisfy(r -> assertThat(r.getEndDate()).isAfterOrEqualTo(LocalDate.now()));
+        assertThat(carService.list(new CarFilterDto(), PageRequest.of(0, 20)).getContent())
+                .anySatisfy(car -> assertThat(car.getNextReservation()).isNotNull());
+    }
+
+    @Test
     @DisplayName("Native soft-delete queries run on PostgreSQL")
     void nativeCarQueries() {
         Car car = carRepository.findAll().getFirst();

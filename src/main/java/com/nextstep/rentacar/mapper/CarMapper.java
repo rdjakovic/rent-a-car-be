@@ -14,10 +14,12 @@ import org.mapstruct.Named;
 public interface CarMapper {
 
     @Mapping(target = "displayName", source = ".", qualifiedByName = "generateDisplayName")
+    @Mapping(target = "nextReservation", ignore = true)
     CarResponseDto toResponseDto(Car car);
 
     @Mapping(target = "displayName", source = ".", qualifiedByName = "generateDisplayName")
     @Mapping(target = "branchName", source = "branch.name")
+    @Mapping(target = "nextReservation", ignore = true)
     CarListResponseDto toListResponseDto(Car car);
 
     @Mapping(target = "id", ignore = true)

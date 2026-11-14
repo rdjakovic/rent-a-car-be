@@ -89,7 +89,7 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
     }
 
     @Test
@@ -229,6 +229,22 @@ class PostgresIntegrationTest {
                 .allSatisfy(r -> assertThat(r.getEndDate()).isAfterOrEqualTo(LocalDate.now()));
         assertThat(carService.list(new CarFilterDto(), PageRequest.of(0, 20)).getContent())
                 .anySatisfy(car -> assertThat(car.getNextReservation()).isNotNull());
+    }
+
+    @Test
+    @DisplayName("Branch active column (V8): seeded branches are active and an inactive branch hides its cars")
+    void branchActiveStatus() {
+        assertThat(jdbcTemplate.queryForList("SELECT active FROM branches", Boolean.class)).isNotEmpty().containsOnly(true);
+
+        Car car = carRepository.findAll().getFirst();
+        Long branchId = car.getBranch().getId();
+        LocalDate day = LocalDate.now().plusDays(90);
+        assertThat(carRepository.findAvailableCars(branchId, day, day)).extracting(Car::getId).contains(car.getId());
+
+        jdbcTemplate.update("UPDATE branches SET active = false WHERE id = ?", branchId);
+        assertThat(carRepository.findAvailableCars(branchId, day, day)).isEmpty();
+        assertThat(carRepository.findAvailableCarsWithFilters(branchId, day, day, null, null, null, null, null, PageRequest.of(0, 10)))
+                .isEmpty();
     }
 
     @Test

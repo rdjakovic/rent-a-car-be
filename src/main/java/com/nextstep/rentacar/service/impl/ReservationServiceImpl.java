@@ -61,6 +61,8 @@ public class ReservationServiceImpl implements ReservationService {
                 .orElseThrow(() -> new EntityNotFoundException("Pickup branch not found: " + request.getPickupBranchId()));
         Branch dropoff = branchRepository.findById(request.getDropoffBranchId())
                 .orElseThrow(() -> new EntityNotFoundException("Dropoff branch not found: " + request.getDropoffBranchId()));
+        ensureBranchOpen(pickup, "Pickup");
+        ensureBranchOpen(dropoff, "Dropoff");
 
         ensureCarAvailable(car.getId(), request.getStartDate(), request.getEndDate(), null);
 
@@ -107,11 +109,13 @@ public class ReservationServiceImpl implements ReservationService {
         if (!reservation.getPickupBranch().getId().equals(request.getPickupBranchId())) {
             Branch pickup = branchRepository.findById(request.getPickupBranchId())
                     .orElseThrow(() -> new EntityNotFoundException("Pickup branch not found: " + request.getPickupBranchId()));
+            ensureBranchOpen(pickup, "Pickup");
             reservation.setPickupBranch(pickup);
         }
         if (!reservation.getDropoffBranch().getId().equals(request.getDropoffBranchId())) {
             Branch dropoff = branchRepository.findById(request.getDropoffBranchId())
                     .orElseThrow(() -> new EntityNotFoundException("Dropoff branch not found: " + request.getDropoffBranchId()));
+            ensureBranchOpen(dropoff, "Dropoff");
             reservation.setDropoffBranch(dropoff);
         }
 
@@ -271,6 +275,13 @@ public class ReservationServiceImpl implements ReservationService {
         }
         if (end.isBefore(start)) {
             throw new IllegalArgumentException("End date must be on or after start date");
+        }
+    }
+
+    /** A closed branch can't be chosen; a reservation that keeps its (since closed) branch can still be edited. */
+    private void ensureBranchOpen(Branch branch, String role) {
+        if (!branch.isActive()) {
+            throw new IllegalStateException(role + " branch is inactive: " + branch.getName());
         }
     }
 

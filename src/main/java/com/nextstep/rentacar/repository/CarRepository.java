@@ -36,11 +36,13 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
 
     /**
      * Find available cars for the given date range and branch.
-     * Cars with maintenance scheduled within the range are excluded; cars in the shop are not AVAILABLE.
+     * Cars with maintenance scheduled within the range are excluded; cars in the shop are not AVAILABLE;
+     * cars of an inactive (closed) branch are not offered.
      */
     @Query("""
         SELECT c FROM Car c 
         WHERE c.branch.id = :branchId 
+        AND c.branch.active = true
         AND c.status = 'AVAILABLE' 
         AND c.deleted = false
         AND c.id NOT IN (
@@ -64,6 +66,7 @@ public interface CarRepository extends JpaRepository<Car, Long>, JpaSpecificatio
     @Query("""
         SELECT c FROM Car c 
         WHERE c.branch.id = :branchId 
+        AND c.branch.active = true
         AND c.status = 'AVAILABLE' 
         AND c.deleted = false
         AND (:category IS NULL OR c.category = :category)

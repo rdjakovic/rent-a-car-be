@@ -61,6 +61,7 @@ For another database, pass `-Dflyway.url=... -Dflyway.user=... -Dflyway.password
 ### PostgreSQL in Docker (`docker` profile)
 - `compose.yaml` defines PostgreSQL 17; Spring Boot starts it when the app runs with the `docker` profile and connects to it automatically
 - The `docker` profile also activates `dev` (seed users `admin`/`admin123`, `john.doe`/`admin123`)
+- Like `local`, it uses the open development security chain so the UI works without login; plain `dev` uses the real security rules
 - Data is kept in the `rent-a-car-be_postgres-data` volume; `docker compose down -v` deletes it
 - From the IDE, set the active profile to `docker` (e.g. program argument `--spring.profiles.active=docker` or env `SPRING_PROFILES_ACTIVE=docker`)
 
@@ -126,7 +127,7 @@ com.nextstep.rentacar/
 
 - **local**: H2 in-memory database (default)
 - **dev**: Local PostgreSQL database
-- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker
+- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker; uses the open development security like `local` (the UI has no login yet)
 - **test**: H2 in-memory database for integration tests
 - **prod**: Production PostgreSQL; requires `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `JWT_SECRET`
 

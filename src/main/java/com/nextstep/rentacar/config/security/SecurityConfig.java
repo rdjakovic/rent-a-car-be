@@ -47,11 +47,12 @@ public class SecurityConfig {
     private List<String> allowedOrigins;
 
     /**
-     * Real security: every profile except the development ones served by {@link #localSecurityFilterChain}.
+     * Real security: every profile except the automated tests served by {@link #testSecurityFilterChain}
+     * (so `local` and `docker` ask for a login too, with the seeded users).
      * Rules check permissions; which role has which is defined in {@link RolePermissions}.
      */
     @Bean
-    @Profile("!local & !test & !docker")
+    @Profile("!test")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -116,13 +117,13 @@ public class SecurityConfig {
     }
 
     /**
-     * Development chain: everything is open except endpoints that need the caller's identity.
-     * 'docker' is local development with PostgreSQL, so it uses this chain too (the UI has no login yet).
+     * Test chain, for the automated tests only ('test' profile): everything is open except the endpoints that
+     * need the caller's identity, so a test can call any endpoint without a token. Never active when running the app.
      */
     @Bean
-    @Profile({"local", "test", "docker"})
+    @Profile("test")
     @Order(0)
-    public SecurityFilterChain localSecurityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain testSecurityFilterChain(HttpSecurity http) throws Exception {
         http.cors(c -> c.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))

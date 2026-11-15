@@ -60,7 +60,7 @@ For another database, pass `-Dflyway.url=... -Dflyway.user=... -Dflyway.password
 ### PostgreSQL in Docker (`docker` profile)
 - `compose.yaml` defines PostgreSQL 17; Spring Boot starts it when the app runs with the `docker` profile and connects to it automatically
 - The `docker` profile also activates `dev` (seed users `admin`, `maria.manager` and `john.doe`, all with password `admin123`)
-- Like `local`, it uses the open development security chain so the UI works without login; plain `dev` uses the real security rules
+- Like every profile except `test`, it uses the real security rules: sign in with a seeded user (see Data Seeding)
 - Data is kept in the `rent-a-car-be_postgres-data` volume; `docker compose down -v` deletes it
 - From the IDE, set the active profile to `docker` (e.g. program argument `--spring.profiles.active=docker` or env `SPRING_PROFILES_ACTIVE=docker`)
 
@@ -170,7 +170,7 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
   - Managers can list users and create **STAFF** (a manager creating a manager or administrator is 403); everything else (`PUT`, reset password) is admin-only
   - `PUT /users/{id}` replaces email, name, phone, role, branch and `enabled`; the username never changes. Disabling ends the user's sessions at once. An administrator can't disable or demote their own account (409), so there is always an administrator who can manage the others
   - `POST /users/{id}/reset-password` sets a new password (min 8 characters), ends all of the user's sessions and lifts a sign-in lock
-- `local`, `docker` and `test` use an open development chain (the UI has no login yet); only `/auth/me` and `/auth/refresh` need a token there
+- Every profile except `test` uses these rules, so `local` and `docker` need a sign-in too (seeded users: see Data Seeding). Only the automated tests (`test` profile) use an open chain, so a test can call any endpoint without a token
 
 ### Package Structure
 ```
@@ -197,7 +197,7 @@ com.nextstep.rentacar/
 
 - **local**: H2 in-memory database (default)
 - **dev**: Local PostgreSQL database
-- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker; uses the open development security like `local` (until the UI can log in)
+- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker
 - **test**: H2 in-memory database for integration tests
 - **prod**: Production PostgreSQL; requires `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `JWT_SECRET`
 

@@ -93,6 +93,11 @@ public class SecurityConfig {
 
                 .requestMatchers("/api/v1/reservations/**").hasAuthority(RESERVATION_MANAGE.name())
 
+                // User accounts: managers can look and create staff (the service checks the role), the rest is admin-only
+                .requestMatchers(HttpMethod.GET, "/api/v1/users", "/api/v1/users/**").hasAuthority(USER_VIEW.name())
+                .requestMatchers(HttpMethod.POST, "/api/v1/users").hasAuthority(USER_CREATE_STAFF.name())
+                .requestMatchers("/api/v1/users/**").hasAuthority(USER_MANAGE.name())
+
                 // Maintenance: seeing jobs and scheduling new ones is for all staff; running them needs MAINTENANCE_MANAGE
                 .requestMatchers(HttpMethod.GET, "/api/v1/maintenance/**").hasAuthority(MAINTENANCE_SCHEDULE.name())
                 .requestMatchers(HttpMethod.POST, "/api/v1/maintenance/schedule").hasAuthority(MAINTENANCE_SCHEDULE.name())

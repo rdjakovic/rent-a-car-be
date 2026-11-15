@@ -82,6 +82,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 | Customers | CRUD, `GET /customers/search`, `GET /customers/searchany` |
 | Reservations | create, `PUT` (PENDING only), list with filters/search, `POST /reservations/{id}/confirm`, `/pickup`, `/complete` (return), `/cancel` |
 | Maintenance | `POST /maintenance/schedule`, `GET`/`PUT /maintenance/{id}`, `POST /maintenance/{id}/start`, `/complete`, `/cancel`, list with filters, `GET /maintenance/due-cars`, `GET /maintenance/scheduled` |
+| Users | `GET /users` (`search`, `role`), `GET /users/{id}`, `POST /users`, `PUT /users/{id}`, `POST /users/{id}/reset-password` |
 | Settings | `GET /settings`, `PUT /settings` |
 
 ## Architecture Overview
@@ -154,8 +155,8 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
   | Role | Rights |
   |---|---|
   | STAFF | browse cars, branches and settings; customers (see, create, edit); reservations (book, edit, confirm, cancel, pick up, return); see maintenance and schedule jobs |
-  | MANAGER | + add and edit cars, see deleted cars; delete customers; edit, start, complete and cancel maintenance |
-  | ADMIN | everything: + delete and restore cars, branches, settings |
+  | MANAGER | + add and edit cars, see deleted cars; delete customers; edit, start, complete and cancel maintenance; see users and create STAFF accounts |
+  | ADMIN | everything: + delete and restore cars, branches, settings, and all user management |
 
 - `GET /auth/me` returns the user's roles and permissions (and branch), so a client can show only what the user may do
 - **Sessions:** `POST /auth/login` (username or email) returns a short **access token** (JWT, 15 minutes; send it as `Authorization: Bearer …`) and sets a **refresh cookie** (`refresh_token`: httpOnly, `SameSite=Strict`, path `/api/v1/auth`, `Secure` outside `local`/`dev`). The session lasts 12 hours from sign-in
@@ -164,7 +165,11 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
   - Only a hash of each refresh token is stored (`refresh_tokens`)
 - **Failed sign-ins** all get the same 401 ("Invalid username or password", also for disabled accounts). After 5 failures in a row an account is locked for 15 minutes (429 with `Retry-After`); the count is kept in memory per instance
 - Without a valid token the answer is **401**; signed in without the permission it is **403** (both as problem details)
-- A disabled user's tokens stop working at once. There is no public registration: accounts are created by admins
+- A disabled user's tokens stop working at once. There is no public registration: accounts are created by managers (STAFF only) and admins
+- **User accounts** (`/users`): each user has exactly one role (STAFF, MANAGER or ADMIN). Staff and managers need a branch (they get an employee record there); administrators don't. The username can't contain `@` (sign-in takes a username or an email, in any letter case; the password is case-sensitive); emails are stored in lower case; the username and email must be unique, ignoring case (409)
+  - Managers can list users and create **STAFF** (a manager creating a manager or administrator is 403); everything else (`PUT`, reset password) is admin-only
+  - `PUT /users/{id}` replaces email, name, phone, role, branch and `enabled`; the username never changes. Disabling ends the user's sessions at once. An administrator can't disable or demote their own account (409), so there is always an administrator who can manage the others
+  - `POST /users/{id}/reset-password` sets a new password (min 8 characters), ends all of the user's sessions and lifts a sign-in lock
 - `local`, `docker` and `test` use an open development chain (the UI has no login yet); only `/auth/me` and `/auth/refresh` need a token there
 
 ### Package Structure

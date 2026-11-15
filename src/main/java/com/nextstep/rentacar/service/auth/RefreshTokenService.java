@@ -82,6 +82,11 @@ public class RefreshTokenService {
                 .ifPresent(t -> t.setRevokedAt(now()));
     }
 
+    /** Ends all of the user's sessions (account disabled, password reset by an admin). */
+    public void endAllSessions(User user) {
+        refreshTokenRepository.revokeAllForUser(user.getId(), now());
+    }
+
     /** Ends all of the user's sessions except the one of this token (if it is the user's). */
     public void endOtherSessions(User user, String keepToken) {
         Long keepId = keepToken == null ? null : refreshTokenRepository.findByTokenHash(hash(keepToken))

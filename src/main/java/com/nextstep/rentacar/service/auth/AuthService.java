@@ -45,7 +45,7 @@ public class AuthService {
         String login = loginRequest.getUsername().trim();
         Optional<User> account = userRepository.findByUsernameOrEmail(login, login);
         // Count failures per account, so switching between username and email doesn't reset them
-        String attemptsKey = account.map(u -> "user:" + u.getId()).orElse("login:" + login.toLowerCase(Locale.ROOT));
+        String attemptsKey = account.map(u -> LoginAttemptService.userKey(u.getId())).orElse("login:" + login.toLowerCase(Locale.ROOT));
         loginAttemptService.checkNotLocked(attemptsKey);
 
         try {

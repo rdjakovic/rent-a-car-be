@@ -95,6 +95,9 @@ class PostgresIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private com.nextstep.rentacar.service.UserService userService;
+
+    @Autowired
     private CarService carService;
 
     @Test
@@ -122,6 +125,17 @@ class PostgresIntegrationTest {
         var third = refreshTokenService.start(admin);
         refreshTokenService.endOtherSessions(admin, third.token());
         assertThat(refreshTokenService.rotate(third.token()).token()).isNotBlank();
+    }
+
+    @Test
+    @DisplayName("User search by text and role runs on PostgreSQL")
+    void userSearch() {
+        PageRequest page = PageRequest.of(0, 10);
+
+        assertThat(userService.search("JOHN", null, page).getContent()).extracting(u -> u.getUsername()).contains("john.doe");
+        assertThat(userService.search(null, com.nextstep.rentacar.domain.enums.UserRole.ADMIN, page).getContent())
+                .extracting(u -> u.getUsername()).contains("admin").doesNotContain("john.doe");
+        assertThat(userService.search("rentacar.com", null, page).getTotalElements()).isGreaterThanOrEqualTo(2);
     }
 
     @Test

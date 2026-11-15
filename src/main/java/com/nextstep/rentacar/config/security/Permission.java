@@ -28,5 +28,12 @@ public enum Permission {
     BRANCH_MANAGE,
 
     /** Change the application settings */
-    SETTINGS_MANAGE
+    SETTINGS_MANAGE,
+
+    /** See the user accounts */
+    USER_VIEW,
+    /** Create STAFF accounts (creating managers and administrators needs USER_MANAGE) */
+    USER_CREATE_STAFF,
+    /** Everything else about accounts: roles, branch, disabling, passwords */
+    USER_MANAGE
 }

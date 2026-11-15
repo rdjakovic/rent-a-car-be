@@ -35,6 +35,11 @@ public class LoginAttemptService {
         this.clock = clock;
     }
 
+    /** The key sign-in failures of a user account are counted under */
+    public static String userKey(Long userId) {
+        return "user:" + userId;
+    }
+
     /** Throws if the key is locked. */
     public void checkNotLocked(String key) {
         Attempts current = attempts.get(key);

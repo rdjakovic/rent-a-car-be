@@ -18,8 +18,9 @@ class RolePermissionsTest {
         var admin = RolePermissions.permissionsOf(List.of("ADMIN"));
 
         assertThat(staff).containsExactlyInAnyOrder(CUSTOMER_MANAGE, RESERVATION_MANAGE, MAINTENANCE_SCHEDULE);
-        assertThat(manager).containsAll(staff).contains(CUSTOMER_DELETE, CAR_MANAGE, MAINTENANCE_MANAGE)
-                .doesNotContain(CAR_DELETE, BRANCH_MANAGE, SETTINGS_MANAGE);
+        assertThat(manager).containsAll(staff)
+                .contains(CUSTOMER_DELETE, CAR_MANAGE, MAINTENANCE_MANAGE, USER_VIEW, USER_CREATE_STAFF)
+                .doesNotContain(CAR_DELETE, BRANCH_MANAGE, SETTINGS_MANAGE, USER_MANAGE);
         assertThat(admin).containsExactlyInAnyOrder(Permission.values());
     }
 

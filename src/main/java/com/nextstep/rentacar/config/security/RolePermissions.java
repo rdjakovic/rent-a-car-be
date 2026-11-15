@@ -25,7 +25,7 @@ public final class RolePermissions {
             EnumSet.of(CUSTOMER_MANAGE, RESERVATION_MANAGE, MAINTENANCE_SCHEDULE);
 
     private static final Set<Permission> MANAGER_PERMISSIONS = with(STAFF_PERMISSIONS,
-            CUSTOMER_DELETE, CAR_MANAGE, MAINTENANCE_MANAGE);
+            CUSTOMER_DELETE, CAR_MANAGE, MAINTENANCE_MANAGE, USER_VIEW, USER_CREATE_STAFF);
 
     // Admins can do everything, including permissions added later
     private static final Set<Permission> ADMIN_PERMISSIONS = EnumSet.allOf(Permission.class);

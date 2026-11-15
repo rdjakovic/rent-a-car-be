@@ -102,6 +102,12 @@ class SecurityRulesTest {
                 Arguments.of("POST", "/api/v1/maintenance/999999/complete", MANAGERS),
                 Arguments.of("POST", "/api/v1/maintenance/999999/cancel", MANAGERS),
 
+                Arguments.of("GET", "/api/v1/users", MANAGERS),
+                Arguments.of("GET", "/api/v1/users/999999", MANAGERS),
+                Arguments.of("POST", "/api/v1/users", MANAGERS),
+                Arguments.of("PUT", "/api/v1/users/999999", ADMIN),
+                Arguments.of("POST", "/api/v1/users/999999/reset-password", ADMIN),
+
                 Arguments.of("GET", "/api/v1/settings", ALL),
                 Arguments.of("PUT", "/api/v1/settings", ADMIN)
         );

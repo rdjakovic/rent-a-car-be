@@ -131,7 +131,7 @@ public class JwtService {
             return claims;
 
         } catch (ParseException | JOSEException e) {
-            log.error("Error validating JWT token", e);
+            log.debug("Malformed JWT: {}", e.getMessage());
             throw new RuntimeException("Failed to validate JWT token", e);
         }
     }

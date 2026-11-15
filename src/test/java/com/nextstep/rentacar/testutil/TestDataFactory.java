@@ -215,7 +215,7 @@ public class TestDataFactory {
 
     public static LoginRequestDto createLoginRequest(String email, String password) {
         LoginRequestDto request = new LoginRequestDto();
-        request.setEmail(email);
+        request.setUsername(email);
         request.setPassword(password);
         return request;
     }

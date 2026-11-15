@@ -25,7 +25,8 @@ server:
 app:
   jwt:
     secret: local-development-secret-key-256-bits-long-for-hmac-sha256-algorithm
-    expiration: 3600000 # 1 hour for development
+    expiration: 15m
+    refresh-cookie-secure: false # plain http on localhost
 
 # Enable CORS for local development
 cors:

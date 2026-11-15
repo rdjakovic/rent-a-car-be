@@ -76,7 +76,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 
 | Resource | Endpoints |
 |---|---|
-| Auth | `POST /auth/login`, `GET /auth/me` (user, roles, permissions, branch), `POST /auth/refresh` |
+| Auth | `POST /auth/login` (username or email), `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/change-password`, `GET /auth/me` (user, roles, permissions, branch) |
 | Branches | CRUD, `GET /branches/search?name=&city=` (both optional, partial and case-insensitive), `/by-city`, `/by-country`, `/by-name-and-city` (exact matches) |
 | Cars | CRUD (soft delete), `POST /cars/{id}/restore`, `GET /cars/deleted`, `GET /cars/branch/{branchId}`, `GET /cars/available` |
 | Customers | CRUD, `GET /customers/search`, `GET /customers/searchany` |
@@ -158,6 +158,11 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
   | ADMIN | everything: + delete and restore cars, branches, settings |
 
 - `GET /auth/me` returns the user's roles and permissions (and branch), so a client can show only what the user may do
+- **Sessions:** `POST /auth/login` (username or email) returns a short **access token** (JWT, 15 minutes; send it as `Authorization: Bearer …`) and sets a **refresh cookie** (`refresh_token`: httpOnly, `SameSite=Strict`, path `/api/v1/auth`, `Secure` outside `local`/`dev`). The session lasts 12 hours from sign-in
+  - `POST /auth/refresh` uses the cookie (no access token needed): new access token, new cookie (the old one is replaced), same session end. If a replaced cookie is used again it was copied, so all of that user's sessions end
+  - `POST /auth/logout` ends the session and deletes the cookie; `POST /auth/change-password` needs the current password and ends the user's other sessions
+  - Only a hash of each refresh token is stored (`refresh_tokens`)
+- **Failed sign-ins** all get the same 401 ("Invalid username or password", also for disabled accounts). After 5 failures in a row an account is locked for 15 minutes (429 with `Retry-After`); the count is kept in memory per instance
 - Without a valid token the answer is **401**; signed in without the permission it is **403** (both as problem details)
 - A disabled user's tokens stop working at once. There is no public registration: accounts are created by admins
 - `local`, `docker` and `test` use an open development chain (the UI has no login yet); only `/auth/me` and `/auth/refresh` need a token there
@@ -202,6 +207,7 @@ com.nextstep.rentacar/
   - V7 (Java) reservation pick-up/return: ACTIVE status, odometer and pick-up/return times
   - V8 branch `active` flag (existing branches become active)
   - V9 roles STAFF (formerly EMPLOYEE), MANAGER and ADMIN; CUSTOMER retired (customer-only users are disabled)
+  - V10 `refresh_tokens` (sign-in sessions)
 - Most integration tests run on H2, which accepts SQL PostgreSQL rejects. For example `(:date IS NULL OR …)` with a date
   parameter fails on PostgreSQL ("could not determine data type of parameter"); write `CAST(:date AS LocalDate) IS NULL`
   and cover new queries in `PostgresIntegrationTest`
@@ -223,7 +229,7 @@ com.nextstep.rentacar/
 > Generate one with e.g. `openssl rand -base64 48`. Only the `local`, `dev` and `test` profiles
 > have built-in development secrets.
 
-- JWT tokens with configurable expiration
+- Token lifetimes: `JWT_EXPIRATION` (access token, default `15m`) and `JWT_REFRESH_EXPIRATION` (session, default `12h`)
 - `ADMIN_PASSWORD` (optional): if set, the seeded `admin` user's password is set from it at startup. Use it to get a working admin in prod; remove it afterwards if the admin should be able to change the password
 - Password encoding with BCrypt
 - CORS: browsers on other origins are allowed only from the exact origins in `cors.allowed-origins` (`CORS_ORIGINS`; `local` and `dev` allow http://localhost:3000). None by default: serve the UI and API behind one host (the UI's dev server proxies `/api`)
@@ -237,7 +243,7 @@ Initial data is created via Flyway migration `V2__seed_roles_and_admin.sql`:
 - **Staff user**: `john.doe`/`admin123` (Downtown Branch)
 - **Manager user** (`local`, `dev` and `docker` only): `maria.manager`/`admin123` (Downtown Branch)
 
-These passwords work only in the `local`, `dev` and `docker` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Log in with the email address (`admin@rentacar.com`, `john.doe@rentacar.com`, `maria.manager@rentacar.com`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
+These passwords work only in the `local`, `dev` and `docker` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Sign in with the username or the email address (e.g. `admin@rentacar.com`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
 - Sample branches, cars, customers, and reservations
 
 Extra sample data for `local`, `dev` and `docker` only (`src/main/resources/db/dev-data`):

@@ -50,7 +50,8 @@ app:
   jwt:
     # No default: profiles without their own secret must set JWT_SECRET (validated at startup)
     secret: ${JWT_SECRET:}
-    expiration: ${JWT_EXPIRATION:86400000} # 24 hours in milliseconds
+    expiration: ${JWT_EXPIRATION:15m} # access token
+    refresh-expiration: ${JWT_REFRESH_EXPIRATION:12h} # sign-in session (refresh cookie)
   admin:
     # Optional: sets the seeded admin user's password at startup (see AdminPasswordInitializer)
     password: ${ADMIN_PASSWORD:}

@@ -37,7 +37,7 @@ server:
 app:
   jwt:
     secret: ${JWT_SECRET}
-    expiration: ${JWT_EXPIRATION:86400000} # 24 hours
+    expiration: ${JWT_EXPIRATION:15m}
 
 management:
   endpoints:

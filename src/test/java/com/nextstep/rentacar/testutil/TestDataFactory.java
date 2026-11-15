@@ -213,17 +213,6 @@ public class TestDataFactory {
         return role;
     }
 
-    public static RegisterRequestDto createRegisterRequest() {
-        RegisterRequestDto request = new RegisterRequestDto();
-        request.setUsername("testuser" + System.currentTimeMillis());
-        request.setEmail("testuser@test.com");
-        request.setPassword("Test123!");
-        request.setFirstName("Test");
-        request.setLastName("User");
-        request.setPhone("+1-555-0100");
-        return request;
-    }
-
     public static LoginRequestDto createLoginRequest(String email, String password) {
         LoginRequestDto request = new LoginRequestDto();
         request.setEmail(email);

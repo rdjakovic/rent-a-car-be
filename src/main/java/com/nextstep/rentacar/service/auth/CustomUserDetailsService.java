@@ -1,11 +1,12 @@
 package com.nextstep.rentacar.service.auth;
 
+import com.nextstep.rentacar.config.security.RolePermissions;
+import com.nextstep.rentacar.domain.entity.Role;
 import com.nextstep.rentacar.domain.entity.User;
 import com.nextstep.rentacar.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,7 +14,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -30,12 +30,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsernameOrEmail(username, username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        List<GrantedAuthority> authorities = user.getRoles().stream()
-                .map(role -> new SimpleGrantedAuthority("ROLE_" + role.getName()))
-                .collect(Collectors.toList());
+        List<String> roles = user.getRoles().stream().map(Role::getName).toList();
+        List<GrantedAuthority> authorities = RolePermissions.authoritiesOf(roles);
 
-        log.debug("User loaded successfully: {} with roles: {}", username, 
-                user.getRoles().stream().map(role -> role.getName()).collect(Collectors.toList()));
+        log.debug("User loaded successfully: {} with roles: {}", username, roles);
 
         return org.springframework.security.core.userdetails.User.builder()
                 .username(user.getUsername())

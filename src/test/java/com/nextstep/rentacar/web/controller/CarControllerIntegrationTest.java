@@ -182,7 +182,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("GET /api/v1/cars/{id} - should return car by ID")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getCarById_shouldReturnCar() throws Exception {
         // Given
         Long carId = carService.create(aCar().withBranchId(branchId).asHybrid().build()).getId();
@@ -199,7 +199,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("GET /api/v1/cars/{id} - should return 404 for non-existent car")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getCarById_withNonExistentId_shouldReturn404() throws Exception {
         mockMvc.perform(get("/api/v1/cars/{id}", 99999L))
                 .andDo(print())
@@ -266,7 +266,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("GET /api/v1/cars/branch/{branchId} - should return cars by branch")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getCarsByBranch_shouldReturnFilteredCars() throws Exception {
         // Given
         Long otherBranchId = branchService.create(aBranch().inLosAngeles().build()).getId();
@@ -287,7 +287,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("GET /api/v1/cars/available - should return available cars for date range")
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(roles = "STAFF")
     void getAvailableCars_shouldFilterByDateAndCriteria() throws Exception {
         // Given
         Long carId1 = carService.create(aCar()
@@ -341,7 +341,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("GET /api/v1/cars/available - with price filter")
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(roles = "STAFF")
     void getAvailableCars_withPriceFilter_shouldReturnFilteredCars() throws Exception {
         // Given
         carService.create(aCar().withBranchId(branchId).asEconomy().withDailyPrice("29.99").build());
@@ -394,7 +394,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("Security - Customer cannot create cars")
-    @WithMockUser(roles = "CUSTOMER")
+    @WithMockUser(roles = "STAFF")
     void createCar_asCustomer_shouldReturn403() throws Exception {
         CarRequestDto request = aCar().withBranchId(branchId).build();
 
@@ -407,7 +407,7 @@ class CarControllerIntegrationTest {
 
     @Test
     @DisplayName("Security - Employee can create but not delete cars")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void deleteCar_asEmployee_shouldReturn403() throws Exception {
         Long carId = carService.create(aCar().withBranchId(branchId).build()).getId();
 

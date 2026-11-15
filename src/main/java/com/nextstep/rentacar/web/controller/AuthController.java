@@ -1,7 +1,6 @@
 package com.nextstep.rentacar.web.controller;
 
 import com.nextstep.rentacar.dto.request.LoginRequestDto;
-import com.nextstep.rentacar.dto.request.RegisterRequestDto;
 import com.nextstep.rentacar.dto.response.LoginResponseDto;
 import com.nextstep.rentacar.dto.response.UserResponseDto;
 import com.nextstep.rentacar.service.auth.AuthService;
@@ -12,7 +11,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -25,25 +23,6 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
 
     private final AuthService authService;
-
-    @PostMapping("/register")
-    @Operation(summary = "Register a new user", description = "Register a new customer account")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User registered successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid registration data"),
-            @ApiResponse(responseCode = "409", description = "Username or email already exists")
-    })
-    public ResponseEntity<UserResponseDto> register(@Valid @RequestBody RegisterRequestDto registerRequest) {
-        log.info("Registration request for username: {}", registerRequest.getUsername());
-        
-        try {
-            UserResponseDto userResponse = authService.register(registerRequest);
-            return ResponseEntity.status(HttpStatus.CREATED).body(userResponse);
-        } catch (RuntimeException e) {
-            log.error("Registration failed for username: {}, error: {}", registerRequest.getUsername(), e.getMessage());
-            throw e;
-        }
-    }
 
     @PostMapping("/login")
     @Operation(summary = "User login", description = "Authenticate user and return JWT token")

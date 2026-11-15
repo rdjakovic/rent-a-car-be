@@ -79,7 +79,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search parameter")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withSearchParameter_shouldCallServiceWithSearch() throws Exception {
         // Given
         String searchTerm = "John Doe";
@@ -106,7 +106,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search with other filters")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withSearchAndOtherFilters_shouldPassAllParameters() throws Exception {
         // Given
         String searchTerm = "john@example.com";
@@ -138,7 +138,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should work without search parameter (backward compatibility)")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withoutSearchParameter_shouldCallServiceWithoutSearch() throws Exception {
         // Given
         given(reservationService.listWithFilters(
@@ -161,7 +161,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle empty search parameter")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withEmptySearchParameter_shouldPassEmptyString() throws Exception {
         // Given
         given(reservationService.listWithFilters(
@@ -184,7 +184,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search parameter with special characters")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withSpecialCharactersInSearch_shouldPassToService() throws Exception {
         // Given
         String searchTerm = "john.doe@example.com";
@@ -207,7 +207,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search parameter with numeric values")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withNumericSearch_shouldPassToService() throws Exception {
         // Given
         String searchTerm = "12345";
@@ -230,7 +230,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search validation errors for too short search term")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withTooShortSearch_shouldReturn400WithDetails() throws Exception {
         // Given
         String searchTerm = "x"; // Too short
@@ -259,7 +259,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search validation errors for too long search term")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withTooLongSearch_shouldReturn400WithDetails() throws Exception {
         // Given
         String searchTerm = "a".repeat(101); // Too long
@@ -285,7 +285,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle search validation errors for invalid characters")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withInvalidCharacters_shouldReturn400WithDetails() throws Exception {
         // Given
         String searchTerm = "!@#$%^&*"; // Invalid characters only
@@ -311,7 +311,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should handle pagination with search")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withSearchAndPagination_shouldReturnPaginatedResults() throws Exception {
         // Given
         String searchTerm = "Toyota";
@@ -352,7 +352,7 @@ class ReservationControllerTest {
 
     @Test
     @DisplayName("GET /api/v1/reservations - should return empty results for search with no matches")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listReservations_withSearchNoMatches_shouldReturnEmptyPage() throws Exception {
         // Given
         String searchTerm = "nonexistent";

@@ -8,6 +8,7 @@ import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -20,6 +21,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.List;
@@ -27,24 +29,30 @@ import java.util.Set;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.hasItem;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.request;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Exercises the production security filter chain (active for any profile other than local/test).
  * Allowed requests may still fail for other reasons (400 validation, 404 unknown id); the tests only
  * check whether security lets them through. Mutating requests use empty bodies or unknown ids.
+ * Without a (valid) token the answer is 401; signed in without the right permission it is 403.
  */
 @SpringBootTest(properties = "app.jwt.secret=security-rules-test-secret-at-least-32-chars")
 @AutoConfigureMockMvc
 @ActiveProfiles("security-rules-test")
 class SecurityRulesTest {
 
-    private static final Set<String> ALL = Set.of("CUSTOMER", "EMPLOYEE", "ADMIN");
-    private static final Set<String> STAFF = Set.of("EMPLOYEE", "ADMIN");
+    private static final Set<String> ALL = Set.of("STAFF", "MANAGER", "ADMIN");
+    private static final Set<String> MANAGERS = Set.of("MANAGER", "ADMIN");
     private static final Set<String> ADMIN = Set.of("ADMIN");
 
     @Autowired
@@ -65,26 +73,34 @@ class SecurityRulesTest {
                 Arguments.of("DELETE", "/api/v1/branches/999999", ADMIN),
 
                 Arguments.of("GET", "/api/v1/cars", ALL),
-                Arguments.of("GET", "/api/v1/cars/deleted", STAFF),
-                Arguments.of("POST", "/api/v1/cars", STAFF),
-                Arguments.of("PUT", "/api/v1/cars/999999", STAFF),
+                Arguments.of("GET", "/api/v1/cars/available", ALL),
+                Arguments.of("GET", "/api/v1/cars/deleted", MANAGERS),
+                Arguments.of("POST", "/api/v1/cars", MANAGERS),
+                Arguments.of("PUT", "/api/v1/cars/999999", MANAGERS),
                 Arguments.of("DELETE", "/api/v1/cars/999999", ADMIN),
                 Arguments.of("POST", "/api/v1/cars/999999/restore", ADMIN),
 
-                Arguments.of("GET", "/api/v1/customers", STAFF),
-                Arguments.of("POST", "/api/v1/customers", STAFF),
+                Arguments.of("GET", "/api/v1/customers", ALL),
+                Arguments.of("POST", "/api/v1/customers", ALL),
+                Arguments.of("PUT", "/api/v1/customers/999999", ALL),
+                Arguments.of("DELETE", "/api/v1/customers/999999", MANAGERS),
 
-                Arguments.of("GET", "/api/v1/reservations", STAFF),
-                Arguments.of("POST", "/api/v1/reservations", STAFF),
-                Arguments.of("POST", "/api/v1/reservations/999999/confirm", STAFF),
-                Arguments.of("POST", "/api/v1/reservations/999999/pickup", STAFF),
-                Arguments.of("POST", "/api/v1/reservations/999999/complete", STAFF),
+                Arguments.of("GET", "/api/v1/reservations", ALL),
+                Arguments.of("POST", "/api/v1/reservations", ALL),
+                Arguments.of("PUT", "/api/v1/reservations/999999", ALL),
+                Arguments.of("POST", "/api/v1/reservations/999999/confirm", ALL),
+                Arguments.of("POST", "/api/v1/reservations/999999/cancel", ALL),
+                Arguments.of("POST", "/api/v1/reservations/999999/pickup", ALL),
+                Arguments.of("POST", "/api/v1/reservations/999999/complete", ALL),
 
-                Arguments.of("GET", "/api/v1/maintenance", STAFF),
-                Arguments.of("GET", "/api/v1/maintenance/999999", STAFF),
-                Arguments.of("PUT", "/api/v1/maintenance/999999", STAFF),
-                Arguments.of("POST", "/api/v1/maintenance/999999/complete", STAFF),
-                Arguments.of("GET", "/api/v1/maintenance/due-cars", STAFF),
+                Arguments.of("GET", "/api/v1/maintenance", ALL),
+                Arguments.of("GET", "/api/v1/maintenance/999999", ALL),
+                Arguments.of("GET", "/api/v1/maintenance/due-cars", ALL),
+                Arguments.of("POST", "/api/v1/maintenance/schedule", ALL),
+                Arguments.of("PUT", "/api/v1/maintenance/999999", MANAGERS),
+                Arguments.of("POST", "/api/v1/maintenance/999999/start", MANAGERS),
+                Arguments.of("POST", "/api/v1/maintenance/999999/complete", MANAGERS),
+                Arguments.of("POST", "/api/v1/maintenance/999999/cancel", MANAGERS),
 
                 Arguments.of("GET", "/api/v1/settings", ALL),
                 Arguments.of("PUT", "/api/v1/settings", ADMIN)
@@ -109,13 +125,16 @@ class SecurityRulesTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{}");
         if (!"ANONYMOUS".equals(principal)) {
-            req = req.with(user("test-" + principal.toLowerCase()).roles(principal));
+            req = req.with(user("test-" + principal.toLowerCase())
+                    .authorities(RolePermissions.authoritiesOf(List.of(principal))));
         }
 
         int status = mockMvc.perform(req).andReturn().getResponse().getStatus();
 
-        if (allowed) {
-            assertThat(status).as("%s %s as %s should pass security", method, path, principal).isNotEqualTo(403);
+        if ("ANONYMOUS".equals(principal)) {
+            assertThat(status).as("%s %s without a token should be 401", method, path).isEqualTo(401);
+        } else if (allowed) {
+            assertThat(status).as("%s %s as %s should pass security", method, path, principal).isNotIn(401, 403);
         } else {
             assertThat(status).as("%s %s as %s should be forbidden", method, path, principal).isEqualTo(403);
         }
@@ -130,19 +149,75 @@ class SecurityRulesTest {
     }
 
     @Test
-    void meRequiresAuthentication() throws Exception {
-        mockMvc.perform(get("/api/v1/auth/me")).andExpect(status().isForbidden());
+    @DisplayName("Public registration is gone: accounts are created by admins")
+    void registrationIsGone() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/register").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
+    @DisplayName("Without a token the answer is a 401 problem detail")
+    void meRequiresAuthentication() throws Exception {
+        mockMvc.perform(get("/api/v1/auth/me"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.status").value(401));
+    }
+
+    @Test
+    @DisplayName("A missing permission is a 403 problem detail")
+    void forbiddenIsAProblemDetail() throws Exception {
+        mockMvc.perform(put("/api/v1/settings").contentType(MediaType.APPLICATION_JSON).content("{}")
+                        .with(user("staff").authorities(RolePermissions.authoritiesOf(List.of("STAFF")))))
+                .andExpect(status().isForbidden())
+                .andExpect(content().contentType(MediaType.APPLICATION_PROBLEM_JSON))
+                .andExpect(jsonPath("$.detail").value("You don't have permission for this action"));
+    }
+
+    @Test
+    @DisplayName("An admin's JWT grants every permission, and /me lists them")
     void validJwtGrantsTheUsersRoles() throws Exception {
         User admin = userRepository.findByUsernameWithRoles("admin").orElseThrow();
         String token = jwtService.generateToken(admin);
 
         mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles").value(hasItem("ADMIN")))
+                .andExpect(jsonPath("$.permissions").value(hasItem("SETTINGS_MANAGE")));
         mockMvc.perform(get("/api/v1/customers").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @DisplayName("The former employee is STAFF: reservations yes, adding cars no; /me shows the branch")
+    void staffJwtHasStaffRights() throws Exception {
+        User staff = userRepository.findByUsernameWithRoles("john.doe").orElseThrow();
+        String token = jwtService.generateToken(staff);
+
+        mockMvc.perform(get("/api/v1/auth/me").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.roles").value(hasItem("STAFF")))
+                .andExpect(jsonPath("$.permissions").value(hasItem("RESERVATION_MANAGE")))
+                .andExpect(jsonPath("$.permissions").value(not(hasItem("CAR_MANAGE"))))
+                .andExpect(jsonPath("$.branchId").value(1));
+        mockMvc.perform(get("/api/v1/reservations").header("Authorization", "Bearer " + token))
+                .andExpect(status().isOk());
+        mockMvc.perform(post("/api/v1/cars").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @Transactional
+    @DisplayName("A disabled user's token stops working before it expires")
+    void disabledUsersTokenIsRefused() throws Exception {
+        User staff = userRepository.findByUsernameWithRoles("john.doe").orElseThrow();
+        String token = jwtService.generateToken(staff);
+        staff.setEnabled(false);
+        userRepository.saveAndFlush(staff);
+
+        mockMvc.perform(get("/api/v1/customers").header("Authorization", "Bearer " + token))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
@@ -158,6 +233,6 @@ class SecurityRulesTest {
         forged.sign(new MACSigner("some-other-secret-that-is-at-least-32-chars"));
 
         mockMvc.perform(get("/api/v1/customers").header("Authorization", "Bearer " + forged.serialize()))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 }

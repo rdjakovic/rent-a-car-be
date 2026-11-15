@@ -59,7 +59,7 @@ For another database, pass `-Dflyway.url=... -Dflyway.user=... -Dflyway.password
 
 ### PostgreSQL in Docker (`docker` profile)
 - `compose.yaml` defines PostgreSQL 17; Spring Boot starts it when the app runs with the `docker` profile and connects to it automatically
-- The `docker` profile also activates `dev` (seed users `admin`/`admin123`, `john.doe`/`admin123`)
+- The `docker` profile also activates `dev` (seed users `admin`, `maria.manager` and `john.doe`, all with password `admin123`)
 - Like `local`, it uses the open development security chain so the UI works without login; plain `dev` uses the real security rules
 - Data is kept in the `rent-a-car-be_postgres-data` volume; `docker compose down -v` deletes it
 - From the IDE, set the active profile to `docker` (e.g. program argument `--spring.profiles.active=docker` or env `SPRING_PROFILES_ACTIVE=docker`)
@@ -76,7 +76,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 
 | Resource | Endpoints |
 |---|---|
-| Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh` |
+| Auth | `POST /auth/login`, `GET /auth/me` (user, roles, permissions, branch), `POST /auth/refresh` |
 | Branches | CRUD, `GET /branches/search?name=&city=` (both optional, partial and case-insensitive), `/by-city`, `/by-country`, `/by-name-and-city` (exact matches) |
 | Cars | CRUD (soft delete), `POST /cars/{id}/restore`, `GET /cars/deleted`, `GET /cars/branch/{branchId}`, `GET /cars/available` |
 | Customers | CRUD, `GET /customers/search`, `GET /customers/searchany` |
@@ -94,7 +94,7 @@ The application follows a layered architecture with distinct domain entities:
 - **Reservation**: Customer bookings with overlap prevention logic
 - **Customer**: Customer information with driver license validation
 - **Branch**: Rental locations where cars are picked up/dropped off; can be closed (`active` flag)
-- **User/Role**: Authentication system with ADMIN/EMPLOYEE/CUSTOMER roles
+- **User/Role**: Authentication system with STAFF, MANAGER and ADMIN roles
 - **Employee**: Staff members associated with branches
 - **Maintenance**: Car maintenance records and scheduling
 - **Payment**: Payment processing for reservations
@@ -149,8 +149,17 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
 
 **Security:**
 - JWT-based authentication using Nimbus library
-- Role-based access control (RBAC)
-- Different endpoints protected by different roles. With the real rules (`dev`, `prod`): browsing branches, cars and settings needs any signed-in user; customers, reservations and maintenance need ADMIN or EMPLOYEE; changing branches or settings, deleting and restoring cars need ADMIN
+- Roles grant permissions, and the rules check permissions (`config/security/Permission`, `RolePermissions`). Each role has the rights of the one before it:
+
+  | Role | Rights |
+  |---|---|
+  | STAFF | browse cars, branches and settings; customers (see, create, edit); reservations (book, edit, confirm, cancel, pick up, return); see maintenance and schedule jobs |
+  | MANAGER | + add and edit cars, see deleted cars; delete customers; edit, start, complete and cancel maintenance |
+  | ADMIN | everything: + delete and restore cars, branches, settings |
+
+- `GET /auth/me` returns the user's roles and permissions (and branch), so a client can show only what the user may do
+- Without a valid token the answer is **401**; signed in without the permission it is **403** (both as problem details)
+- A disabled user's tokens stop working at once. There is no public registration: accounts are created by admins
 - `local`, `docker` and `test` use an open development chain (the UI has no login yet); only `/auth/me` and `/auth/refresh` need a token there
 
 ### Package Structure
@@ -178,7 +187,7 @@ com.nextstep.rentacar/
 
 - **local**: H2 in-memory database (default)
 - **dev**: Local PostgreSQL database
-- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker; uses the open development security like `local` (the UI has no login yet)
+- **docker**: `dev` + PostgreSQL started from `compose.yaml` via Docker; uses the open development security like `local` (until the UI can log in)
 - **test**: H2 in-memory database for integration tests
 - **prod**: Production PostgreSQL; requires `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD` and `JWT_SECRET`
 
@@ -192,6 +201,7 @@ com.nextstep.rentacar/
   - V6 maintenance odometer reading
   - V7 (Java) reservation pick-up/return: ACTIVE status, odometer and pick-up/return times
   - V8 branch `active` flag (existing branches become active)
+  - V9 roles STAFF (formerly EMPLOYEE), MANAGER and ADMIN; CUSTOMER retired (customer-only users are disabled)
 - Most integration tests run on H2, which accepts SQL PostgreSQL rejects. For example `(:date IS NULL OR …)` with a date
   parameter fails on PostgreSQL ("could not determine data type of parameter"); write `CAST(:date AS LocalDate) IS NULL`
   and cover new queries in `PostgresIntegrationTest`
@@ -202,7 +212,7 @@ com.nextstep.rentacar/
 ### Testing
 - Integration tests use `@SpringBootTest` with `@ActiveProfiles("test")` (H2)
 - `PostgresIntegrationTest` runs the `prod` profile against PostgreSQL via **Testcontainers**; it needs Docker and is skipped when Docker is not running
-- `SecurityRulesTest` checks the production security rules for every role
+- `SecurityRulesTest` checks the production security rules for every role (and without a token)
 - UTC timestamps for consistent auditing across all environments
 
 ### Security
@@ -216,16 +226,18 @@ com.nextstep.rentacar/
 - JWT tokens with configurable expiration
 - `ADMIN_PASSWORD` (optional): if set, the seeded `admin` user's password is set from it at startup. Use it to get a working admin in prod; remove it afterwards if the admin should be able to change the password
 - Password encoding with BCrypt
-- CORS configured for local development
+- CORS: browsers on other origins are allowed only from the exact origins in `cors.allowed-origins` (`CORS_ORIGINS`; `local` and `dev` allow http://localhost:3000). None by default: serve the UI and API behind one host (the UI's dev server proxies `/api`)
+- Swagger UI has an **Authorize** button: paste the `access_token` from `POST /auth/login`
 - Method-level security enabled with `@EnableMethodSecurity`
 
 ## Data Seeding
 
 Initial data is created via Flyway migration `V2__seed_roles_and_admin.sql`:
 - **Admin user**: `admin`/`admin123`
-- **Employee user**: `john.doe`/`admin123`
+- **Staff user**: `john.doe`/`admin123` (Downtown Branch)
+- **Manager user** (`local`, `dev` and `docker` only): `maria.manager`/`admin123` (Downtown Branch)
 
-These passwords work only in the `local`, `dev` and `docker` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
+These passwords work only in the `local`, `dev` and `docker` profiles (set by `db/dev-data/R__dev_seed_user_passwords.sql`). Log in with the email address (`admin@rentacar.com`, `john.doe@rentacar.com`, `maria.manager@rentacar.com`). Elsewhere, set the admin password with `ADMIN_PASSWORD` (see Security).
 - Sample branches, cars, customers, and reservations
 
 Extra sample data for `local`, `dev` and `docker` only (`src/main/resources/db/dev-data`):

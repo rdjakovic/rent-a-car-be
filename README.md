@@ -77,7 +77,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 | Resource | Endpoints |
 |---|---|
 | Auth | `POST /auth/register`, `POST /auth/login`, `GET /auth/me`, `POST /auth/refresh` |
-| Branches | CRUD, `GET /branches/search`, `/by-city`, `/by-country`, `/by-name-and-city` |
+| Branches | CRUD, `GET /branches/search?name=&city=` (both optional, partial and case-insensitive), `/by-city`, `/by-country`, `/by-name-and-city` (exact matches) |
 | Cars | CRUD (soft delete), `POST /cars/{id}/restore`, `GET /cars/deleted`, `GET /cars/branch/{branchId}`, `GET /cars/available` |
 | Customers | CRUD, `GET /customers/search`, `GET /customers/searchany` |
 | Reservations | create, `PUT` (PENDING only), list with filters/search, `POST /reservations/{id}/confirm`, `/pickup`, `/complete` (return), `/cancel` |
@@ -93,7 +93,7 @@ The application follows a layered architecture with distinct domain entities:
 - **Car**: Vehicle inventory with soft delete capability (uses `@SQLRestriction("deleted = false")`)
 - **Reservation**: Customer bookings with overlap prevention logic
 - **Customer**: Customer information with driver license validation
-- **Branch**: Rental locations where cars are picked up/dropped off
+- **Branch**: Rental locations where cars are picked up/dropped off; can be closed (`active` flag)
 - **User/Role**: Authentication system with ADMIN/EMPLOYEE/CUSTOMER roles
 - **Employee**: Staff members associated with branches
 - **Maintenance**: Car maintenance records and scheduling
@@ -119,13 +119,18 @@ PENDING ──confirm──▶ CONFIRMED ──pick up──▶ ACTIVE ──ret
 
 **Car Status vs. Bookings:**
 - The car status is its physical state: AVAILABLE, RENTED (picked up), MAINTENANCE (job in progress) or OUT_OF_SERVICE. A booking doesn't change it; pick-up does
-- Bookings are date-based: `GET /cars/available` excludes cars with an overlapping PENDING/CONFIRMED/ACTIVE reservation, maintenance scheduled within the dates, or a status other than AVAILABLE
+- Bookings are date-based: `GET /cars/available` excludes cars with an overlapping PENDING/CONFIRMED/ACTIVE reservation, maintenance scheduled within the dates, an inactive branch, or a status other than AVAILABLE
 - A rental still out past its end date also blocks bookings starting today
 - `GET /cars` and `GET /cars/{id}` include `nextReservation`: the car's current or next open booking
 
+**Branches:**
+- A branch is `active` by default. An **inactive** branch is closed: its cars aren't offered in `GET /cars/available`, and it can't be the pick-up or return location of a new reservation, nor the new location when editing one (409 "Dropoff branch is inactive: …"). A reservation that keeps a branch that closed later can still be edited; existing reservations, pick-ups and returns are unaffected
+- Switch it with `PUT /branches/{id}` (ADMIN): `active` is optional there, so an update without it leaves the status unchanged
+- A duplicate name in the same city is refused (400)
+
 **Car Management:**
 - Cars use **soft delete** (others use hard delete)
-- Catalog search (`search`) matches make, model or "year make model"
+- Catalog search (`search`) matches make, model or "year make model"; the separate filters `make` and `model` match partially (case-insensitive), `year` and `vin` exactly (the VIN is case-sensitive)
 
 **Maintenance:**
 ```
@@ -186,6 +191,7 @@ com.nextstep.rentacar/
   - V5 application settings (mileage unit)
   - V6 maintenance odometer reading
   - V7 (Java) reservation pick-up/return: ACTIVE status, odometer and pick-up/return times
+  - V8 branch `active` flag (existing branches become active)
 - Most integration tests run on H2, which accepts SQL PostgreSQL rejects. For example `(:date IS NULL OR …)` with a date
   parameter fails on PostgreSQL ("could not determine data type of parameter"); write `CAST(:date AS LocalDate) IS NULL`
   and cover new queries in `PostgresIntegrationTest`
@@ -249,4 +255,4 @@ The project uses MapStruct for DTO-Entity mapping with Spring component model:
 - **Service Layer Focus**: Core business logic testing
 - **Entity Manager Clearing**: Tests simulate transaction boundaries
 - **Date-based Logic**: Reservation availability and overlap scenarios
-- **Lifecycles**: `RentalLifecycleIntegrationTest` (pick-up/return), `MaintenanceServiceIntegrationTest`, `CarNextReservationIntegrationTest`
+- **Lifecycles**: `RentalLifecycleIntegrationTest` (pick-up/return), `MaintenanceServiceIntegrationTest`, `CarNextReservationIntegrationTest`, `BranchActiveStatusIntegrationTest`

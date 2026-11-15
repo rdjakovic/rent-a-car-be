@@ -11,4 +11,7 @@ import lombok.NoArgsConstructor;
 public class SettingsResponseDto {
 
     private MileageUnit mileageUnit;
+
+    /** Branch pre-selected on the availability page; null when none is set. */
+    private Long defaultBranchId;
 }

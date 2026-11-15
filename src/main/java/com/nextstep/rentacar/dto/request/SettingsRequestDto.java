@@ -13,4 +13,7 @@ public class SettingsRequestDto {
 
     @NotNull(message = "Mileage unit is required")
     private MileageUnit mileageUnit;
+
+    /** Must be an active branch; null clears the default. */
+    private Long defaultBranchId;
 }

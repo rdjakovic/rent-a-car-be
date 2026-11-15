@@ -128,6 +128,14 @@ class PostgresIntegrationTest {
     }
 
     @Test
+    @DisplayName("Sign-in lookup ignores case on PostgreSQL")
+    void signInLookupIgnoresCase() {
+        assertThat(userRepository.findByUsernameOrEmail("JOHN.DOE", "JOHN.DOE")).isPresent();
+        assertThat(userRepository.findByUsernameOrEmail("Admin@RentACar.com", "Admin@RentACar.com")).isPresent();
+        assertThat(userRepository.findByUsernameOrEmail("nobody", "nobody")).isEmpty();
+    }
+
+    @Test
     @DisplayName("User search by text and role runs on PostgreSQL")
     void userSearch() {
         PageRequest page = PageRequest.of(0, 10);

@@ -166,6 +166,12 @@ class UserControllerIntegrationTest {
         mockMvc.perform(create(asAdmin, newUser(username, "STAFF", branch.getId())))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.detail").value("Username is already taken"));
+        // Sign-in ignores case, so a name that differs only in case is the same name
+        Map<String, Object> otherCase = newUser(username.toUpperCase(), "STAFF", branch.getId());
+        otherCase.put("email", "different-" + suffix() + "@test.com");
+        mockMvc.perform(create(asAdmin, otherCase))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("Username is already taken"));
         Map<String, Object> sameEmail = newUser("other-" + suffix(), "STAFF", branch.getId());
         sameEmail.put("email", username.toUpperCase() + "@TEST.COM");
         mockMvc.perform(create(asAdmin, sameEmail))

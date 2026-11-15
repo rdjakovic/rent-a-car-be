@@ -124,6 +124,18 @@ class AuthControllerIntegrationTest {
     }
 
     @Test
+    @DisplayName("Sign-in ignores the case of the username and the email, but not of the password")
+    void signInIgnoresCase() throws Exception {
+        User user = newUser();
+
+        mockMvc.perform(login(user.getUsername().toUpperCase(), PASSWORD))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.user.username").value(user.getUsername()));
+        mockMvc.perform(login(user.getEmail().toUpperCase(), PASSWORD)).andExpect(status().isOk());
+        mockMvc.perform(login(user.getEmail(), PASSWORD.toUpperCase())).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     @DisplayName("Wrong password, unknown user and disabled account all get the same 401")
     void failedSignInsLookTheSame() throws Exception {
         User user = newUser();

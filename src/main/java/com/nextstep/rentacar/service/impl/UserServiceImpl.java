@@ -90,10 +90,10 @@ public class UserServiceImpl implements UserService {
 
         String username = request.getUsername().trim();
         String email = normalizeEmail(request.getEmail());
-        if (userRepository.existsByUsername(username)) {
+        if (userRepository.existsByUsernameIgnoreCase(username)) {
             throw new DuplicateResourceException("Username is already taken");
         }
-        if (userRepository.existsByEmail(email)) {
+        if (userRepository.existsByEmailIgnoreCase(email)) {
             throw new DuplicateResourceException("Email is already in use");
         }
 
@@ -125,7 +125,7 @@ public class UserServiceImpl implements UserService {
         requireBranchForWorkRoles(request.getRole(), request.getBranchId());
 
         String email = normalizeEmail(request.getEmail());
-        if (!email.equals(user.getEmail()) && userRepository.existsByEmail(email)) {
+        if (!email.equalsIgnoreCase(user.getEmail()) && userRepository.existsByEmailIgnoreCase(email)) {
             throw new DuplicateResourceException("Email is already in use");
         }
 

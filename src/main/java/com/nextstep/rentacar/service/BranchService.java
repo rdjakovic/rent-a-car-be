@@ -19,7 +19,8 @@ public interface BranchService {
 
     Page<BranchResponseDto> list(Pageable pageable);
 
-    Page<BranchResponseDto> searchByName(String name, Pageable pageable);
+    /** Partial, case-insensitive match on name and/or city; a null or blank filter is ignored. */
+    Page<BranchResponseDto> search(String name, String city, Pageable pageable);
 
     List<BranchResponseDto> findByCity(String city);
 

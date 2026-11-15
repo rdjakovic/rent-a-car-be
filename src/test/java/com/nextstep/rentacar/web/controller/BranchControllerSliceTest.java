@@ -230,7 +230,7 @@ class BranchControllerSliceTest {
             1
         );
 
-        given(branchService.searchByName(eq("Test"), any(Pageable.class))).willReturn(searchResults);
+        given(branchService.search(eq("Test"), isNull(), any(Pageable.class))).willReturn(searchResults);
 
         // When & Then
         mockMvc.perform(get("/api/v1/branches/search")
@@ -242,7 +242,7 @@ class BranchControllerSliceTest {
                 .andExpect(jsonPath("$.content[0].name").value("Test Branch"))
                 .andExpect(jsonPath("$.totalElements").value(1));
 
-        verify(branchService, times(1)).searchByName(eq("Test"), any(Pageable.class));
+        verify(branchService, times(1)).search(eq("Test"), isNull(), any(Pageable.class));
     }
 
     @Test

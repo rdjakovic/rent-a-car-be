@@ -94,7 +94,18 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+    }
+
+    @Test
+    @DisplayName("Roles are STAFF, MANAGER and ADMIN; the former employee is STAFF (V9)")
+    void rolesMigrated() {
+        assertThat(jdbcTemplate.queryForList("SELECT name FROM roles", String.class))
+                .containsExactlyInAnyOrder("STAFF", "MANAGER", "ADMIN");
+        assertThat(jdbcTemplate.queryForList(
+                "SELECT r.name FROM user_roles ur JOIN roles r ON r.id = ur.role_id JOIN users u ON u.id = ur.user_id"
+                        + " WHERE u.username = 'john.doe'", String.class))
+                .containsExactly("STAFF");
     }
 
     @Test

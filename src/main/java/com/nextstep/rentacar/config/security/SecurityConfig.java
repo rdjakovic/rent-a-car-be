@@ -2,6 +2,7 @@ package com.nextstep.rentacar.config.security;
 
 import com.nextstep.rentacar.service.auth.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import jakarta.servlet.DispatcherType;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -27,6 +28,9 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;
+import java.util.List;
+
+import static com.nextstep.rentacar.config.security.Permission.*;
 
 @Configuration
 @EnableWebSecurity
@@ -36,8 +40,16 @@ public class SecurityConfig {
 
     private final CustomUserDetailsService userDetailsService;
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final ProblemDetailSecurityHandler problemDetailSecurityHandler;
 
-    /** Real security: every profile except the development ones served by {@link #localSecurityFilterChain}. */
+    /** Origins allowed to call the API from a browser on another origin (the UI's dev server proxies instead). */
+    @Value("${cors.allowed-origins:}")
+    private List<String> allowedOrigins;
+
+    /**
+     * Real security: every profile except the development ones served by {@link #localSecurityFilterChain}.
+     * Rules check permissions; which role has which is defined in {@link RolePermissions}.
+     */
     @Bean
     @Profile("!local & !test & !docker")
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,6 +57,9 @@ public class SecurityConfig {
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(problemDetailSecurityHandler)
+                .accessDeniedHandler(problemDetailSecurityHandler))
             .authorizeHttpRequests(auth -> auth
                 // Let error dispatches through so callers see the real status (e.g. 400) instead of 403
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
@@ -58,25 +73,30 @@ public class SecurityConfig {
                 // Also permit custom OpenAPI path configured in application.yml
                 .requestMatchers("/api-docs", "/api-docs/**").permitAll()
                 
-                // Branches: anyone signed in can browse, only admins change them
+                // Branches: anyone signed in can browse
                 .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").authenticated()
-                .requestMatchers("/api/v1/branches/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/branches/**").hasAuthority(BRANCH_MANAGE.name())
 
-                // Cars: browsing for everyone signed in; deleted cars and changes are staff-only
-                .requestMatchers(HttpMethod.GET, "/api/v1/cars/deleted").hasAnyRole("ADMIN", "EMPLOYEE")
+                // Cars: anyone signed in can browse; deleted cars and changes need CAR_MANAGE
+                .requestMatchers(HttpMethod.GET, "/api/v1/cars/deleted").hasAuthority(CAR_MANAGE.name())
                 .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasRole("ADMIN")
-                .requestMatchers(HttpMethod.POST, "/api/v1/cars/*/restore").hasRole("ADMIN")
-                .requestMatchers("/api/v1/cars/**").hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasAuthority(CAR_DELETE.name())
+                .requestMatchers(HttpMethod.POST, "/api/v1/cars/*/restore").hasAuthority(CAR_DELETE.name())
+                .requestMatchers("/api/v1/cars/**").hasAuthority(CAR_MANAGE.name())
 
-                // Settings: everyone signed in can read them (pages need e.g. the mileage unit), only admins change them
+                // Settings: anyone signed in can read them (pages need e.g. the mileage unit)
                 .requestMatchers(HttpMethod.GET, "/api/v1/settings").authenticated()
-                .requestMatchers("/api/v1/settings/**").hasRole("ADMIN")
+                .requestMatchers("/api/v1/settings/**").hasAuthority(SETTINGS_MANAGE.name())
 
-                // Customer data, reservations and maintenance are staff-only
-                // (no ownership checks exist, so customers get no direct access)
-                .requestMatchers("/api/v1/customers/**", "/api/v1/reservations/**", "/api/v1/maintenance/**")
-                    .hasAnyRole("ADMIN", "EMPLOYEE")
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/customers/**").hasAuthority(CUSTOMER_DELETE.name())
+                .requestMatchers("/api/v1/customers/**").hasAuthority(CUSTOMER_MANAGE.name())
+
+                .requestMatchers("/api/v1/reservations/**").hasAuthority(RESERVATION_MANAGE.name())
+
+                // Maintenance: seeing jobs and scheduling new ones is for all staff; running them needs MAINTENANCE_MANAGE
+                .requestMatchers(HttpMethod.GET, "/api/v1/maintenance/**").hasAuthority(MAINTENANCE_SCHEDULE.name())
+                .requestMatchers(HttpMethod.POST, "/api/v1/maintenance/schedule").hasAuthority(MAINTENANCE_SCHEDULE.name())
+                .requestMatchers("/api/v1/maintenance/**").hasAuthority(MAINTENANCE_MANAGE.name())
 
                 // All other requests require authentication
                 .anyRequest().authenticated()
@@ -102,6 +122,9 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .headers(h -> h.frameOptions(f -> f.sameOrigin()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint(problemDetailSecurityHandler)
+                .accessDeniedHandler(problemDetailSecurityHandler))
             .authorizeHttpRequests(a -> a
                 // These endpoints need the caller's identity
                 .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
@@ -144,7 +167,8 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(Arrays.asList("*"));
+        // Exact origins only: requests carry credentials, so any origin ("*") would let any site use them
+        configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
         configuration.setAllowCredentials(true);

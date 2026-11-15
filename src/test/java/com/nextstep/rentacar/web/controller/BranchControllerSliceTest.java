@@ -127,7 +127,7 @@ class BranchControllerSliceTest {
 
     @Test
     @DisplayName("GET /api/v1/branches - should return paginated list")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void listBranches_shouldReturnPaginatedResults() throws Exception {
         // Given
         BranchResponseDto branch1 = new BranchResponseDto();
@@ -165,7 +165,7 @@ class BranchControllerSliceTest {
 
     @Test
     @DisplayName("GET /api/v1/branches/{id} - should return branch by id")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getBranchById_shouldReturnBranch() throws Exception {
         // Given
         given(branchService.getById(1L)).willReturn(sampleBranchResponse);
@@ -221,7 +221,7 @@ class BranchControllerSliceTest {
 
     @Test
     @DisplayName("GET /api/v1/branches/search - should search by name")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void searchBranchesByName_shouldReturnFilteredResults() throws Exception {
         // Given
         Page<BranchResponseDto> searchResults = new PageImpl<>(
@@ -247,7 +247,7 @@ class BranchControllerSliceTest {
 
     @Test
     @DisplayName("GET /api/v1/branches/by-city - should return branches by city")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getBranchesByCity_shouldReturnFilteredList() throws Exception {
         // Given
         List<BranchResponseDto> cityBranches = Arrays.asList(sampleBranchResponse);
@@ -266,7 +266,7 @@ class BranchControllerSliceTest {
 
     @Test
     @DisplayName("GET /api/v1/branches/by-country - should return branches by country")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void getBranchesByCountry_shouldReturnFilteredList() throws Exception {
         // Given
         List<BranchResponseDto> countryBranches = Arrays.asList(sampleBranchResponse);

@@ -38,7 +38,7 @@ class ReservationSearchErrorHandlingTest {
 
     @Test
     @DisplayName("Search validation error should return proper error response with search requirements")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void searchValidationError_shouldReturnProperErrorResponse() throws Exception {
         // Given
         String shortSearchTerm = "a";
@@ -67,7 +67,7 @@ class ReservationSearchErrorHandlingTest {
 
     @Test
     @DisplayName("Search validation error for too long term should include proper details")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void searchValidationErrorTooLong_shouldReturnProperErrorResponse() throws Exception {
         // Given
         String longSearchTerm = "a".repeat(101);
@@ -87,7 +87,7 @@ class ReservationSearchErrorHandlingTest {
 
     @Test
     @DisplayName("Search validation error for invalid characters should include character requirements")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void searchValidationErrorInvalidChars_shouldReturnProperErrorResponse() throws Exception {
         // Given
         String invalidSearchTerm = "!@#$%^&*";
@@ -108,7 +108,7 @@ class ReservationSearchErrorHandlingTest {
 
     @Test
     @DisplayName("Regular IllegalArgumentException should still work for backward compatibility")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void regularIllegalArgumentException_shouldReturnBadRequest() throws Exception {
         // Given
         given(reservationService.listWithFilters(
@@ -128,7 +128,7 @@ class ReservationSearchErrorHandlingTest {
 
     @Test
     @DisplayName("Valid search should work normally")
-    @WithMockUser(roles = "EMPLOYEE")
+    @WithMockUser(roles = "STAFF")
     void validSearch_shouldReturnResults() throws Exception {
         // Given
         String validSearchTerm = "John Doe";

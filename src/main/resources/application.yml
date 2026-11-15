@@ -55,6 +55,11 @@ app:
     # Optional: sets the seeded admin user's password at startup (see AdminPasswordInitializer)
     password: ${ADMIN_PASSWORD:}
 
+# Browser origins allowed to call the API directly (comma-separated, exact). None by default:
+# serve the UI and the API behind one host (the UI's dev server proxies /api)
+cors:
+  allowed-origins: ${CORS_ORIGINS:}
+
 springdoc:
   api-docs:
     path: /api-docs

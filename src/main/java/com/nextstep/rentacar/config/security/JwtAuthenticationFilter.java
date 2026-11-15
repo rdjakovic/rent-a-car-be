@@ -57,6 +57,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 
                 // Validate token (this also checks expiration, signature, etc.)
                 jwtService.validateToken(jwt);
+
+                // A disabled user's token no longer counts, even before it expires
+                if (!userDetails.isEnabled()) {
+                    log.debug("Ignoring JWT of disabled user: {}", username);
+                    filterChain.doFilter(request, response);
+                    return;
+                }
                 
                 // Create authentication token
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

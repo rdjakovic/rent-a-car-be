@@ -145,7 +145,7 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
 - RECALL jobs are safety recalls: start them to take the car out of service
 
 **Settings:**
-- `GET /settings` (any signed-in user) and `PUT /settings` (ADMIN): currently the mileage unit (KILOMETERS or MILES). It is a label only; values are never converted
+- `GET /settings` (any signed-in user) and `PUT /settings` (ADMIN): the mileage unit (KILOMETERS or MILES; a label only, values are never converted) and the optional default branch (`defaultBranchId`, which the UI pre-selects on the availability search). `PUT` replaces both: leaving `defaultBranchId` out or `null` clears it, an unknown branch is 404 and an inactive one 409. `GET` reports `null` if the saved branch has since been closed or removed
 
 **Security:**
 - JWT-based authentication using Nimbus library

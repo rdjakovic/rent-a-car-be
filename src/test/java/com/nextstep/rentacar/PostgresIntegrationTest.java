@@ -14,6 +14,7 @@ import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.CarService;
 import com.nextstep.rentacar.service.SettingsService;
 import com.nextstep.rentacar.dto.request.CarFilterDto;
+import com.nextstep.rentacar.dto.request.SettingsRequestDto;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,6 +101,17 @@ class PostgresIntegrationTest {
     @DisplayName("Settings are seeded with kilometers as the mileage unit (V5)")
     void settingsSeeded() {
         assertThat(settingsService.get().getMileageUnit()).isEqualTo(MileageUnit.KILOMETERS);
+    }
+
+    @Test
+    @DisplayName("The default branch setting is stored, reported and cleared")
+    void defaultBranchSetting() {
+        Long branchId = carRepository.findAll().getFirst().getBranch().getId();
+
+        assertThat(settingsService.update(new SettingsRequestDto(MileageUnit.KILOMETERS, branchId)).getDefaultBranchId())
+                .isEqualTo(branchId);
+        assertThat(settingsService.get().getDefaultBranchId()).isEqualTo(branchId);
+        assertThat(settingsService.update(new SettingsRequestDto(MileageUnit.KILOMETERS, null)).getDefaultBranchId()).isNull();
     }
 
     @Test

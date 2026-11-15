@@ -19,6 +19,7 @@ app:
   jwt:
     secret: test-secret-key-256-bits-long-for-hmac-sha256-algorithm-testing-only
     expiration: 60000 # 1 minute for fast test execution
+    refresh-cookie-secure: false
 
 management:
   endpoints:

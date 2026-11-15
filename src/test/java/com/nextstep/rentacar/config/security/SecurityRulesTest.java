@@ -146,6 +146,18 @@ class SecurityRulesTest {
                 .andExpect(status().isBadRequest());
         mockMvc.perform(get("/actuator/health")).andExpect(status().isOk());
         mockMvc.perform(get("/api-docs")).andExpect(status().isOk());
+        // Refresh and sign-out use the refresh cookie, not an access token
+        mockMvc.perform(post("/api/v1/auth/refresh")).andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Your session has ended. Please sign in again."));
+        mockMvc.perform(post("/api/v1/auth/logout")).andExpect(status().isNoContent());
+    }
+
+    @Test
+    @DisplayName("Changing the password needs a signed-in user")
+    void changePasswordRequiresAuthentication() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/change-password").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.detail").value("Please sign in"));
     }
 
     @Test

@@ -1,6 +1,6 @@
 package com.nextstep.rentacar.dto.request;
 
-import jakarta.validation.constraints.Email;
+import com.fasterxml.jackson.annotation.JsonAlias;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
@@ -12,12 +12,14 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class LoginRequestDto {
 
-    @NotBlank(message = "Email is required")
-    @Email(message = "Email should be valid")
-    @Size(max = 255, message = "Email should not exceed 255 characters")
-    private String email;
+    /** Username or email address ("email" is accepted as the field name too, as before) */
+    @NotBlank(message = "Username or email is required")
+    @Size(max = 255, message = "Username or email should not exceed 255 characters")
+    @JsonAlias("email")
+    private String username;
 
+    // No length rule here: a sign-in checks the password, password rules apply when setting one
     @NotBlank(message = "Password is required")
-    @Size(min = 6, max = 100, message = "Password should be between 6 and 100 characters")
+    @Size(max = 100, message = "Password should not exceed 100 characters")
     private String password;
 }

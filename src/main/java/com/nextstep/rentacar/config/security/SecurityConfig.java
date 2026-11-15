@@ -64,8 +64,8 @@ public class SecurityConfig {
                 // Let error dispatches through so callers see the real status (e.g. 400) instead of 403
                 .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
 
-                // Public endpoints (me/refresh need the caller's identity)
-                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
+                // Public endpoints (me and change-password need the caller's identity; refresh and logout use the refresh cookie)
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 .requestMatchers("/actuator/health", "/actuator/info").permitAll()
@@ -127,7 +127,7 @@ public class SecurityConfig {
                 .accessDeniedHandler(problemDetailSecurityHandler))
             .authorizeHttpRequests(a -> a
                 // These endpoints need the caller's identity
-                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/refresh").authenticated()
+                .requestMatchers("/api/v1/auth/me", "/api/v1/auth/change-password").authenticated()
                 .anyRequest().permitAll())
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();

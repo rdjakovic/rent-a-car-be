@@ -1,11 +1,17 @@
 package com.nextstep.rentacar.web.exception;
 
 import com.nextstep.rentacar.exception.DuplicateResourceException;
+import com.nextstep.rentacar.exception.InvalidCredentialsException;
+import com.nextstep.rentacar.exception.SessionExpiredException;
+import com.nextstep.rentacar.exception.TooManyLoginAttemptsException;
+import com.nextstep.rentacar.web.controller.RefreshCookies;
 import com.nextstep.rentacar.exception.SearchValidationException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -25,6 +31,42 @@ public class GlobalExceptionHandler {
 
     // Spring 7 / Jackson 3 omit the default type; keep it in the response body as before
     private static final URI ABOUT_BLANK = URI.create("about:blank");
+
+    // Optional so controller slice tests don't need it
+    private final ObjectProvider<RefreshCookies> refreshCookies;
+
+    public GlobalExceptionHandler(ObjectProvider<RefreshCookies> refreshCookies) {
+        this.refreshCookies = refreshCookies;
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidCredentials(InvalidCredentialsException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem(HttpStatus.UNAUTHORIZED, "Unauthorized", ex, request));
+    }
+
+    /** The session can't continue: also delete the (useless) refresh cookie */
+    @ExceptionHandler(SessionExpiredException.class)
+    public ResponseEntity<ProblemDetail> handleSessionExpired(SessionExpiredException ex, HttpServletRequest request) {
+        HttpHeaders headers = new HttpHeaders();
+        refreshCookies.ifAvailable(cookies -> headers.add(HttpHeaders.SET_COOKIE, cookies.clear().toString()));
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).headers(headers)
+                .body(problem(HttpStatus.UNAUTHORIZED, "Unauthorized", ex, request));
+    }
+
+    @ExceptionHandler(TooManyLoginAttemptsException.class)
+    public ResponseEntity<ProblemDetail> handleTooManyLoginAttempts(TooManyLoginAttemptsException ex, HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                .header(HttpHeaders.RETRY_AFTER, String.valueOf(Math.max(1, ex.getRetryAfter().toSeconds())))
+                .body(problem(HttpStatus.TOO_MANY_REQUESTS, "Too Many Requests", ex, request));
+    }
+
+    private static ProblemDetail problem(HttpStatus status, String title, Exception ex, HttpServletRequest request) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(status, ex.getMessage());
+        pd.setType(ABOUT_BLANK);
+        pd.setTitle(title);
+        pd.setProperty("path", request.getRequestURI());
+        return pd;
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<ProblemDetail> handleNotFound(EntityNotFoundException ex, HttpServletRequest request) {

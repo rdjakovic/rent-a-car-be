@@ -13,6 +13,9 @@ import com.nextstep.rentacar.service.ReservationService;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.CarService;
 import com.nextstep.rentacar.service.SettingsService;
+import com.nextstep.rentacar.service.auth.RefreshTokenService;
+import com.nextstep.rentacar.exception.SessionExpiredException;
+import com.nextstep.rentacar.repository.UserRepository;
 import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.SettingsRequestDto;
 import org.junit.jupiter.api.DisplayName;
@@ -86,6 +89,12 @@ class PostgresIntegrationTest {
     private SettingsService settingsService;
 
     @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private CarService carService;
 
     @Test
@@ -94,7 +103,25 @@ class PostgresIntegrationTest {
         List<String> versions = jdbcTemplate.queryForList(
                 "SELECT version FROM flyway_schema_history WHERE success ORDER BY installed_rank", String.class);
 
-        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9");
+        assertThat(versions).containsExactly("1", "2", "3", "4", "5", "6", "7", "8", "9", "10");
+    }
+
+    @Test
+    @DisplayName("Sign-in sessions (V10): rotation keeps the session end, a reused token ends every session")
+    void refreshTokenSessions() {
+        var admin = userRepository.findByUsername("admin").orElseThrow();
+        var first = refreshTokenService.start(admin);
+        var second = refreshTokenService.rotate(first.token());
+
+        assertThat(second.token()).isNotEqualTo(first.token());
+        assertThat(second.expiresAt().toInstant()).isCloseTo(first.expiresAt().toInstant(),
+                org.assertj.core.api.Assertions.within(1, java.time.temporal.ChronoUnit.MILLIS));
+        assertThatThrownBy(() -> refreshTokenService.rotate(first.token())).isInstanceOf(SessionExpiredException.class);
+        assertThatThrownBy(() -> refreshTokenService.rotate(second.token())).isInstanceOf(SessionExpiredException.class);
+
+        var third = refreshTokenService.start(admin);
+        refreshTokenService.endOtherSessions(admin, third.token());
+        assertThat(refreshTokenService.rotate(third.token()).token()).isNotBlank();
     }
 
     @Test

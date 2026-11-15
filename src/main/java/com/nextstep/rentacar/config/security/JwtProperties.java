@@ -24,9 +24,19 @@ public class JwtProperties implements InitializingBean {
     private String secret;
 
     /**
-     * JWT token expiration duration
+     * Access token lifetime: short, because an access token can't be revoked (the refresh token renews it)
      */
-    private Duration expiration = Duration.ofHours(24);
+    private Duration expiration = Duration.ofMinutes(15);
+
+    /**
+     * Sign-in session length (refresh token): one working shift from sign-in, not extended by refreshing
+     */
+    private Duration refreshExpiration = Duration.ofHours(12);
+
+    /**
+     * Send the refresh cookie only over HTTPS. Off for local development over plain http.
+     */
+    private boolean refreshCookieSecure = true;
 
     /**
      * JWT issuer

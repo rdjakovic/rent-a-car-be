@@ -81,7 +81,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 log.debug("JWT authentication successful for user: {}", username);
             }
         } catch (Exception e) {
-            log.error("Cannot set user authentication from JWT token", e);
+            // Expired or invalid tokens are routine (the client refreshes); no stack trace
+            log.debug("Ignoring JWT: {}", e.getMessage());
             // Clear security context on error
             SecurityContextHolder.clearContext();
         }

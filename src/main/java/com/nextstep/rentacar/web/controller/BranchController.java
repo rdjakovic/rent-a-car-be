@@ -63,9 +63,11 @@ public class BranchController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search branches by name with pagination and sorting")
-    public ResponseEntity<Page<BranchResponseDto>> searchByName(@RequestParam String name, @ParameterObject Pageable pageable) {
-        return ResponseEntity.ok(branchService.searchByName(name, pageable));
+    @Operation(summary = "Search branches by name and/or city (partial, case-insensitive) with pagination and sorting")
+    public ResponseEntity<Page<BranchResponseDto>> search(@RequestParam(required = false) String name,
+                                                          @RequestParam(required = false) String city,
+                                                          @ParameterObject Pageable pageable) {
+        return ResponseEntity.ok(branchService.search(name, city, pageable));
     }
 
     @GetMapping("/by-city")

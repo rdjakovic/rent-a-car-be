@@ -7,12 +7,15 @@ import com.nextstep.rentacar.mapper.BranchMapper;
 import com.nextstep.rentacar.repository.BranchRepository;
 import com.nextstep.rentacar.service.BranchService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -69,8 +72,18 @@ public class BranchServiceImpl implements BranchService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BranchResponseDto> searchByName(String name, Pageable pageable) {
-        return branchRepository.findByNameContainingIgnoreCase(name, pageable).map(branchMapper::toResponseDto);
+    public Page<BranchResponseDto> search(String name, String city, Pageable pageable) {
+        Specification<Branch> spec = (root, query, cb) -> {
+            List<Predicate> predicates = new ArrayList<>();
+            if (name != null && !name.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("name")), "%" + name.trim().toLowerCase() + "%"));
+            }
+            if (city != null && !city.isBlank()) {
+                predicates.add(cb.like(cb.lower(root.get("city")), "%" + city.trim().toLowerCase() + "%"));
+            }
+            return cb.and(predicates.toArray(new Predicate[0]));
+        };
+        return branchRepository.findAll(spec, pageable).map(branchMapper::toResponseDto);
     }
 
     @Override

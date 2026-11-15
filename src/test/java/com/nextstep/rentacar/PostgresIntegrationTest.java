@@ -8,6 +8,7 @@ import com.nextstep.rentacar.domain.enums.MaintenanceStatus;
 import com.nextstep.rentacar.repository.CarRepository;
 import com.nextstep.rentacar.repository.MaintenanceRepository;
 import com.nextstep.rentacar.repository.PaymentRepository;
+import com.nextstep.rentacar.service.BranchService;
 import com.nextstep.rentacar.service.ReservationService;
 import com.nextstep.rentacar.repository.ReservationRepository;
 import com.nextstep.rentacar.service.CarService;
@@ -76,6 +77,9 @@ class PostgresIntegrationTest {
 
     @Autowired
     private ReservationService reservationService;
+
+    @Autowired
+    private BranchService branchService;
 
     @Autowired
     private SettingsService settingsService;
@@ -245,6 +249,17 @@ class PostgresIntegrationTest {
         assertThat(carRepository.findAvailableCars(branchId, day, day)).isEmpty();
         assertThat(carRepository.findAvailableCarsWithFilters(branchId, day, day, null, null, null, null, null, PageRequest.of(0, 10)))
                 .isEmpty();
+    }
+
+    @Test
+    @DisplayName("Branch search by name and/or city runs on PostgreSQL")
+    void branchSearch() {
+        PageRequest page = PageRequest.of(0, 10);
+
+        assertThat(branchService.search("DOWN", null, page).getContent()).extracting(b -> b.getName()).contains("Downtown Branch");
+        assertThat(branchService.search(null, "new york", page).getContent()).hasSizeGreaterThanOrEqualTo(2);
+        assertThat(branchService.search("airport", "new york", page).getContent()).extracting(b -> b.getName()).containsExactly("Airport Branch");
+        assertThat(branchService.search(null, null, page).getContent()).hasSizeGreaterThanOrEqualTo(3);
     }
 
     @Test

@@ -3,6 +3,7 @@ package com.nextstep.rentacar.domain.entity;
 import com.nextstep.rentacar.domain.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLRestriction;
 
 import java.math.BigDecimal;
@@ -21,7 +22,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
-@ToString(callSuper = true, exclude = {"branch", "reservations", "maintenanceRecords"})
+@ToString(callSuper = true, exclude = {"branch", "reservations", "maintenanceRecords", "images"})
 public class Car extends BaseEntity {
 
     @Column(name = "vin", nullable = false, unique = true, length = 17)
@@ -89,6 +90,11 @@ public class Car extends BaseEntity {
 
     @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Maintenance> maintenanceRecords = new ArrayList<>();
+
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("position ASC")
+    @BatchSize(size = 50)
+    private List<CarImage> images = new ArrayList<>();
 
     public Car(String vin, String make, String model, Integer year, CarCategory category,
                TransmissionType transmission, FuelType fuelType, Integer seats,

@@ -11,6 +11,8 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -41,4 +43,7 @@ public class CarResponseDto {
 
     /** Current or next open booking; filled by the /cars list and details endpoints, null elsewhere */
     private NextReservationDto nextReservation;
+
+    /** Photos in upload order; the UI shows the first as the cover. */
+    private List<CarImageResponseDto> images = new ArrayList<>();
 }

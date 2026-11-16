@@ -78,7 +78,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 |---|---|
 | Auth | `POST /auth/login` (username or email), `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/change-password`, `GET /auth/me` (user, roles, permissions, branch) |
 | Branches | CRUD, `GET /branches/search?name=&city=` (both optional, partial and case-insensitive), `/by-city`, `/by-country`, `/by-name-and-city` (exact matches) |
-| Cars | CRUD (soft delete), `POST /cars/{id}/restore`, `GET /cars/deleted`, `GET /cars/branch/{branchId}`, `GET /cars/available` |
+| Cars | CRUD (soft delete), `POST /cars/{id}/restore`, `GET /cars/deleted`, `GET /cars/branch/{branchId}`, `GET /cars/available`; photos: `POST /cars/{id}/images` (multipart), `GET /cars/{carId}/images/{imageId}`, `DELETE /cars/{carId}/images/{imageId}` |
 | Customers | CRUD, `GET /customers/search`, `GET /customers/searchany` |
 | Reservations | create, `PUT` (PENDING only), list with filters/search, `POST /reservations/{id}/confirm`, `/pickup`, `/complete` (return), `/cancel` |
 | Maintenance | `POST /maintenance/schedule`, `GET`/`PUT /maintenance/{id}`, `POST /maintenance/{id}/start`, `/complete`, `/cancel`, list with filters, `GET /maintenance/due-cars`, `GET /maintenance/scheduled` |
@@ -91,7 +91,7 @@ All endpoints are under `/api/v1` (full details in Swagger UI):
 The application follows a layered architecture with distinct domain entities:
 
 **Core Entities:**
-- **Car**: Vehicle inventory with soft delete capability (uses `@SQLRestriction("deleted = false")`)
+- **Car**: Vehicle inventory with soft delete capability (uses `@SQLRestriction("deleted = false")`); its photos are `CarImage` metadata rows whose bytes live on disk
 - **Reservation**: Customer bookings with overlap prevention logic
 - **Customer**: Customer information with driver license validation
 - **Branch**: Rental locations where cars are picked up/dropped off; can be closed (`active` flag)
@@ -132,6 +132,8 @@ PENDING ──confirm──▶ CONFIRMED ──pick up──▶ ACTIVE ──ret
 **Car Management:**
 - Cars use **soft delete** (others use hard delete)
 - Catalog search (`search`) matches make, model or "year make model"; the separate filters `make` and `model` match partially (case-insensitive), `year` and `vin` exactly (the VIN is case-sensitive)
+- Photos: up to 5 per car, 5 MB each, JPEG/PNG/WebP only (the type is detected from the bytes, not from the upload's content type). Bytes are stored under `app.car-images.dir` (`CAR_IMAGES_DIR`, default `./data/car-images`), keyed by car id and a generated UUID; the `car_images` table keeps id, file name, type, size and position
+- `GET /cars` and `GET /cars/{id}` include `images` (id, relative `url`, fileName, contentType, sizeBytes, position) in upload order. Uploading and deleting need `CAR_MANAGE`; reading a photo is public so a plain `<img>` can load it (car photos are not sensitive)
 
 **Maintenance:**
 ```
@@ -155,7 +157,7 @@ SCHEDULED ──start──▶ IN_PROGRESS ──complete──▶ COMPLETED
   | Role | Rights |
   |---|---|
   | STAFF | browse cars, branches and settings; customers (see, create, edit); reservations (book, edit, confirm, cancel, pick up, return); see maintenance and schedule jobs |
-  | MANAGER | + add and edit cars, see deleted cars; delete customers; edit, start, complete and cancel maintenance; see users and create STAFF accounts |
+  | MANAGER | + add and edit cars, add and remove car photos, see deleted cars; delete customers; edit, start, complete and cancel maintenance; see users and create STAFF accounts |
   | ADMIN | everything: + delete and restore cars, branches, settings, and all user management |
 
 - `GET /auth/me` returns the user's roles and permissions (and branch), so a client can show only what the user may do
@@ -213,6 +215,7 @@ com.nextstep.rentacar/
   - V8 branch `active` flag (existing branches become active)
   - V9 roles STAFF (formerly EMPLOYEE), MANAGER and ADMIN; CUSTOMER retired (customer-only users are disabled)
   - V10 `refresh_tokens` (sign-in sessions)
+  - V11 `car_images` (photo metadata; the files live in the image directory)
 - Most integration tests run on H2, which accepts SQL PostgreSQL rejects. For example `(:date IS NULL OR …)` with a date
   parameter fails on PostgreSQL ("could not determine data type of parameter"); write `CAST(:date AS LocalDate) IS NULL`
   and cover new queries in `PostgresIntegrationTest`
@@ -220,8 +223,13 @@ com.nextstep.rentacar/
 - Audit fields (`created_at`, `updated_at`) handled by `BaseEntity` with JPA auditing
 - JPA auditing configured with UTC timezone via `dateTimeProvider` bean in `JpaConfig`
 
+### Car photos
+- `CAR_IMAGES_DIR` (`app.car-images.dir`, default `./data/car-images`) holds the uploaded files; the database stores only their metadata. Back the directory up with the database and put it on a persistent volume in containers
+- Multipart requests are capped at 6 MB per file and 30 MB in total, leaving room for the service to answer its own 400 (a 5 MB photo is fine)
+
 ### Testing
 - Integration tests use `@SpringBootTest` with `@ActiveProfiles("test")` (H2)
+- `CarImageControllerIntegrationTest` covers upload, the 5-image/5-MB/type limits, serving the bytes and deletion
 - `PostgresIntegrationTest` runs the `prod` profile against PostgreSQL via **Testcontainers**; it needs Docker and is skipped when Docker is not running
 - `SecurityRulesTest` checks the production security rules for every role (and without a token)
 - UTC timestamps for consistent auditing across all environments

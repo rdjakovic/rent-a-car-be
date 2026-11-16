@@ -9,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Lightweight DTO for car list operations to reduce payload size
@@ -35,4 +37,7 @@ public class CarListResponseDto {
 
     /** Current or next open booking; filled by the /cars list and details endpoints, null elsewhere */
     private NextReservationDto nextReservation;
+
+    /** Photos in upload order; the catalog shows the first as the cover. */
+    private List<CarImageResponseDto> images = new ArrayList<>();
 }

@@ -1,5 +1,8 @@
 HELP.md
 target/
+
+# Uploaded car photos (app.car-images.dir default)
+/data/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/

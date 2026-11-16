@@ -15,11 +15,13 @@ public interface CarMapper {
 
     @Mapping(target = "displayName", source = ".", qualifiedByName = "generateDisplayName")
     @Mapping(target = "nextReservation", ignore = true)
+    @Mapping(target = "images", ignore = true)
     CarResponseDto toResponseDto(Car car);
 
     @Mapping(target = "displayName", source = ".", qualifiedByName = "generateDisplayName")
     @Mapping(target = "branchName", source = "branch.name")
     @Mapping(target = "nextReservation", ignore = true)
+    @Mapping(target = "images", ignore = true)
     CarListResponseDto toListResponseDto(Car car);
 
     @Mapping(target = "id", ignore = true)
@@ -28,6 +30,7 @@ public interface CarMapper {
     @Mapping(target = "branch", ignore = true)
     @Mapping(target = "reservations", ignore = true)
     @Mapping(target = "maintenanceRecords", ignore = true)
+    @Mapping(target = "images", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "lastServiceDate", ignore = true)
     @Mapping(target = "nextServiceDate", ignore = true)
@@ -39,6 +42,7 @@ public interface CarMapper {
     @Mapping(target = "branch", ignore = true)
     @Mapping(target = "reservations", ignore = true)
     @Mapping(target = "maintenanceRecords", ignore = true)
+    @Mapping(target = "images", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "lastServiceDate", ignore = true)
     @Mapping(target = "nextServiceDate", ignore = true)

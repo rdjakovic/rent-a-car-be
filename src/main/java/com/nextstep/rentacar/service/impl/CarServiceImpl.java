@@ -2,12 +2,14 @@ package com.nextstep.rentacar.service.impl;
 
 import com.nextstep.rentacar.domain.entity.Branch;
 import com.nextstep.rentacar.domain.entity.Car;
+import com.nextstep.rentacar.domain.entity.CarImage;
 import com.nextstep.rentacar.domain.entity.Reservation;
 import com.nextstep.rentacar.domain.enums.CarCategory;
 import com.nextstep.rentacar.domain.enums.FuelType;
 import com.nextstep.rentacar.domain.enums.TransmissionType;
 import com.nextstep.rentacar.dto.request.CarFilterDto;
 import com.nextstep.rentacar.dto.request.CarRequestDto;
+import com.nextstep.rentacar.dto.response.CarImageResponseDto;
 import com.nextstep.rentacar.dto.response.CarListResponseDto;
 import com.nextstep.rentacar.dto.response.CarResponseDto;
 import com.nextstep.rentacar.dto.response.NextReservationDto;
@@ -58,7 +60,7 @@ public class CarServiceImpl implements CarService {
                 .orElseThrow(() -> new EntityNotFoundException("Branch not found: " + request.getBranchId()));
         car.setBranch(branch);
         Car saved = carRepository.save(car);
-        return carMapper.toResponseDto(saved);
+        return toResponse(saved);
     }
 
     @Override
@@ -75,7 +77,7 @@ public class CarServiceImpl implements CarService {
             car.setBranch(branch);
         }
         Car saved = carRepository.save(car);
-        return carMapper.toResponseDto(saved);
+        return toResponse(saved);
     }
 
     @Override
@@ -99,7 +101,7 @@ public class CarServiceImpl implements CarService {
     public CarResponseDto getById(Long id) {
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Car not found: " + id));
-        CarResponseDto dto = carMapper.toResponseDto(car);
+        CarResponseDto dto = toResponse(car);
         dto.setNextReservation(nextReservations(List.of(id)).get(id));
         return dto;
     }
@@ -107,19 +109,19 @@ public class CarServiceImpl implements CarService {
     @Override
     @Transactional(readOnly = true)
     public Page<CarListResponseDto> list(Pageable pageable) {
-        return carRepository.findAll(pageable).map(carMapper::toListResponseDto);
+        return carRepository.findAll(pageable).map(this::toListResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<CarListResponseDto> listByBranch(Long branchId, Pageable pageable) {
-        return carRepository.findByBranchId(branchId, pageable).map(carMapper::toListResponseDto);
+        return carRepository.findByBranchId(branchId, pageable).map(this::toListResponse);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<CarListResponseDto> listDeleted(Pageable pageable) {
-        return carRepository.findDeletedCars(pageable).map(carMapper::toListResponseDto);
+        return carRepository.findDeletedCars(pageable).map(this::toListResponse);
     }
 
     @Override
@@ -138,7 +140,7 @@ public class CarServiceImpl implements CarService {
         }
         return carRepository.findAvailableCarsWithFilters(branchId, startDate, endDate,
                 category, transmission, fuelType, minSeats, maxPrice, pageable)
-                .map(carMapper::toListResponseDto);
+                .map(this::toListResponse);
     }
 
     @Override
@@ -146,7 +148,7 @@ public class CarServiceImpl implements CarService {
     public Page<CarListResponseDto> list(CarFilterDto filter, Pageable pageable) {
         Specification<Car> spec = buildCarSpecification(filter);
         Page<CarListResponseDto> page = carRepository.findAll(spec, pageable)
-                .map(carMapper::toListResponseDto);
+                .map(this::toListResponse);
         Map<Long, NextReservationDto> next = nextReservations(page.getContent().stream().map(CarListResponseDto::getId).toList());
         page.getContent().forEach(car -> car.setNextReservation(next.get(car.getId())));
         return page;
@@ -163,6 +165,30 @@ public class CarServiceImpl implements CarService {
                     new NextReservationDto(r.getId(), r.getStartDate(), r.getEndDate(), r.getStatus()));
         }
         return next;
+    }
+
+    private CarResponseDto toResponse(Car car) {
+        CarResponseDto dto = carMapper.toResponseDto(car);
+        dto.setImages(imageDtos(car));
+        return dto;
+    }
+
+    private CarListResponseDto toListResponse(Car car) {
+        CarListResponseDto dto = carMapper.toListResponseDto(car);
+        dto.setImages(imageDtos(car));
+        return dto;
+    }
+
+    private List<CarImageResponseDto> imageDtos(Car car) {
+        return car.getImages().stream()
+                .map(image -> new CarImageResponseDto(
+                        image.getId(),
+                        "/api/v1/cars/" + car.getId() + "/images/" + image.getId(),
+                        image.getFileName(),
+                        image.getContentType(),
+                        image.getSizeBytes(),
+                        image.getPosition()))
+                .toList();
     }
 
     private Specification<Car> buildCarSpecification(CarFilterDto filter) {

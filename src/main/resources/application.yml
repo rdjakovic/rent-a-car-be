@@ -1,6 +1,11 @@
 spring:
   application:
     name: rent-a-car
+  servlet:
+    multipart:
+      # The service enforces 5 MB per image; leave headroom so its own 400 is what clients see
+      max-file-size: 6MB
+      max-request-size: 30MB
   profiles:
     active: local
     group:
@@ -47,6 +52,9 @@ management:
       enabled: true
 
 app:
+  car-images:
+    # Where car photos are kept; the database stores only their metadata
+    dir: ${CAR_IMAGES_DIR:./data/car-images}
   jwt:
     # No default: profiles without their own secret must set JWT_SECRET (validated at startup)
     secret: ${JWT_SECRET:}

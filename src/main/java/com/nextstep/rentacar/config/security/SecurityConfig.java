@@ -78,9 +78,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/api/v1/branches/**").authenticated()
                 .requestMatchers("/api/v1/branches/**").hasAuthority(BRANCH_MANAGE.name())
 
-                // Cars: anyone signed in can browse; deleted cars and changes need CAR_MANAGE
+                // Cars: anyone signed in can browse; photos are public so <img> tags can load them;
+                // deleted cars and changes need CAR_MANAGE (photos can be removed by car managers too)
+                .requestMatchers(HttpMethod.GET, "/api/v1/cars/*/images/*").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/v1/cars/deleted").hasAuthority(CAR_MANAGE.name())
                 .requestMatchers(HttpMethod.GET, "/api/v1/cars/**").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/*/images/*").hasAuthority(CAR_MANAGE.name())
                 .requestMatchers(HttpMethod.DELETE, "/api/v1/cars/**").hasAuthority(CAR_DELETE.name())
                 .requestMatchers(HttpMethod.POST, "/api/v1/cars/*/restore").hasAuthority(CAR_DELETE.name())
                 .requestMatchers("/api/v1/cars/**").hasAuthority(CAR_MANAGE.name())

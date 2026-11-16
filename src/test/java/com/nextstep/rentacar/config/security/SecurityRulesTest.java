@@ -79,6 +79,8 @@ class SecurityRulesTest {
                 Arguments.of("PUT", "/api/v1/cars/999999", MANAGERS),
                 Arguments.of("DELETE", "/api/v1/cars/999999", ADMIN),
                 Arguments.of("POST", "/api/v1/cars/999999/restore", ADMIN),
+                Arguments.of("POST", "/api/v1/cars/999999/images", MANAGERS),
+                Arguments.of("DELETE", "/api/v1/cars/999999/images/999999", MANAGERS),
 
                 Arguments.of("GET", "/api/v1/customers", ALL),
                 Arguments.of("POST", "/api/v1/customers", ALL),
@@ -144,6 +146,13 @@ class SecurityRulesTest {
         } else {
             assertThat(status).as("%s %s as %s should be forbidden", method, path, principal).isEqualTo(403);
         }
+    }
+
+    @Test
+    @DisplayName("Car photos are public so <img> tags can load them")
+    void carImagesArePublic() throws Exception {
+        mockMvc.perform(get("/api/v1/cars/999999/images/999999"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
